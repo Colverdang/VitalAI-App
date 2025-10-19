@@ -1,11 +1,12 @@
+// Kiosk.js - UPDATED
 import React, { useState } from 'react';
-import { Users, Stethoscope, Clock, Calendar, MessageCircle, UserPlus } from 'lucide-react';
+import { Users, Stethoscope, Clock, Calendar, MessageCircle, UserPlus, ArrowLeft } from 'lucide-react';
 import PatientPortal from './PatientPortal';
 import StaffDashboard from './StaffDashboard';
 import './Kiosk.css';
 
-const Kiosk = () => {
-  const [userType, setUserType] = useState(null); // null, 'patient', or 'staff'
+const Kiosk = ({ onBackHome }) => {
+  const [userType, setUserType] = useState(null);
   const [quickAction, setQuickAction] = useState(null);
 
   // Quick actions for patients
@@ -74,11 +75,33 @@ const Kiosk = () => {
 
   // If user has selected a specific mode, show that interface
   if (userType === 'patient' && quickAction) {
-    return <PatientPortal quickAction={quickAction} onBack={() => setQuickAction(null)} />;
+    return (
+      <div className="clinic-interface">
+        <div className="kiosk-header">
+          <button className="back-btn" onClick={() => setQuickAction(null)}>
+            <ArrowLeft size={20} />
+            Back to Services
+          </button>
+          <h1>Patient Services - {patientQuickActions.find(a => a.id === quickAction)?.label}</h1>
+        </div>
+        <PatientPortal kioskMode={true} quickAction={quickAction} />
+      </div>
+    );
   }
 
   if (userType === 'staff' && quickAction) {
-    return <StaffDashboard quickAction={quickAction} onBack={() => setQuickAction(null)} />;
+    return (
+      <div className="clinic-interface">
+        <div className="kiosk-header">
+          <button className="back-btn" onClick={() => setQuickAction(null)}>
+            <ArrowLeft size={20} />
+            Back to Services
+          </button>
+          <h1>Staff Portal - {staffQuickActions.find(a => a.id === quickAction)?.label}</h1>
+        </div>
+        <StaffDashboard kioskMode={true} quickAction={quickAction} />
+      </div>
+    );
   }
 
   // If user has selected a type but no specific action, show quick actions
@@ -89,51 +112,34 @@ const Kiosk = () => {
       <div className="clinic-interface">
         {/* Header */}
         <div className="clinic-header">
-          <button 
-            className="back-button"
-            onClick={() => setUserType(null)}
-          >
-            ← Back
+          <button className="back-btn" onClick={() => setUserType(null)}>
+            <ArrowLeft size={20} />
+            Back to Main Menu
           </button>
-          <h1>
-            {userType === 'patient' ? 'Patient Services' : 'Staff Portal'}
-          </h1>
-          <div className="clinic-info">
-            <span>Clinic Kiosk</span>
-          </div>
+          <h1>{userType === 'patient' ? 'Patient Services' : 'Staff Portal'}</h1>
         </div>
 
         {/* Quick Actions Grid */}
-        <div className="quick-actions-section">
+        <div className="quick-actions-view">
           <h2>What would you like to do?</h2>
           <div className="quick-actions-grid">
             {actions.map((action) => (
-              <button
+              <div
                 key={action.id}
-                className="quick-action-card large"
+                className="quick-action-card"
                 onClick={() => setQuickAction(action.id)}
                 style={{ '--action-color': action.color }}
               >
-                <div className="action-icon-container">
+                <div className="action-icon">
                   <action.icon size={32} />
                 </div>
                 <div className="action-content">
                   <h3>{action.label}</h3>
                   <p>{action.description}</p>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
-        </div>
-
-        {/* Full Access Option */}
-        <div className="full-access-section">
-          <button 
-            className="full-access-btn"
-            onClick={() => setQuickAction('full')}
-          >
-            Access Full {userType === 'patient' ? 'Patient' : 'Staff'} Portal
-          </button>
         </div>
       </div>
     );
@@ -149,7 +155,7 @@ const Kiosk = () => {
           <h1>VitalAI Clinic Center</h1>
         </div>
         <div className="clinic-status">
-          <div className="status-indicator open">● Clinic Open</div>
+          <div className="status-open">● Clinic Open</div>
           <span>Current Wait Time: 15-20 mins</span>
         </div>
       </div>
@@ -161,7 +167,7 @@ const Kiosk = () => {
         
         <div className="selection-grid">
           {/* Patient Option */}
-          <button 
+          <div 
             className="selection-card patient"
             onClick={() => setUserType('patient')}
           >
@@ -179,10 +185,10 @@ const Kiosk = () => {
               </ul>
             </div>
             <div className="selection-arrow">→</div>
-          </button>
+          </div>
 
           {/* Staff Option */}
-          <button 
+          <div 
             className="selection-card staff"
             onClick={() => setUserType('staff')}
           >
@@ -200,6 +206,13 @@ const Kiosk = () => {
               </ul>
             </div>
             <div className="selection-arrow">→</div>
+          </div>
+        </div>
+
+        {/* Back to Home Button */}
+        <div className="kiosk-footer">
+          <button className="back-home-btn" onClick={onBackHome}>
+            ← Back to VitalAI Home
           </button>
         </div>
       </div>

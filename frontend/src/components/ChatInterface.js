@@ -1,34 +1,78 @@
+// ChatInterface.js - WITH SIDEBAR MINIMIZE FEATURE
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Paperclip, Calendar } from 'lucide-react';
+import { 
+  Send, Bot, User, Paperclip, Calendar, History, 
+  FileText, Settings, Menu, X, Stethoscope,
+  Phone, Download, Users, BarChart3, AlertTriangle,
+  LogIn, UserPlus, Heart, Pill, Clock, MapPin,
+  ChevronLeft, ChevronRight
+} from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
 import FileUpload from './FileUpload';
 import AppointmentScheduler from './AppointmentScheduler';
 import './ChatInterface.css';
 
-// Main chat interface component for VitalAI
-const ChatInterface = () => {
-  // State for chat messages
+const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
+  // State management
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! I'm VitalAI. How can I help you today? You can describe your symptoms, request an appointment, or upload medical documents.",
+      text: "Hello! I'm VitalAI, your medical assistant. You're chatting as a guest. I can help with symptoms, appointments, and general medical advice. How can I help you today?",
       sender: 'bot',
       timestamp: new Date(),
       type: 'text'
     }
   ]);
-  // State for user input text
+  
   const [inputText, setInputText] = useState('');
-  // State to indicate if bot is "typing"
   const [isLoading, setIsLoading] = useState(false);
-  // State for selected language
   const [selectedLanguage, setSelectedLanguage] = useState('en');
-  // State to show/hide file upload modal
   const [showFileUpload, setShowFileUpload] = useState(false);
-  // State to show/hide appointment scheduler modal
   const [showAppointmentScheduler, setShowAppointmentScheduler] = useState(false);
-  // Ref to scroll to the bottom of messages
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [isGuest, setIsGuest] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Mock data for demonstration
+  const userData = {
+    patient: {
+      name: "John Doe",
+      id: "PT-001234",
+      age: 35,
+      bloodType: "O+",
+      lastVisit: "2024-01-15",
+      primaryDoctor: "Dr. Sarah Smith"
+    },
+    guest: {
+      name: "Guest User",
+      id: "GUEST-001",
+      age: null,
+      bloodType: null,
+      lastVisit: null,
+      primaryDoctor: null
+    }
+  };
+
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setShowSidebar(false); // Hide sidebar on mobile by default
+        setIsSidebarMinimized(false); // Reset minimized state on mobile
+      } else {
+        setShowSidebar(true); // Always show sidebar on desktop
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -39,11 +83,127 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Handle sending a message
+  // Toggle sidebar minimize
+  const toggleSidebarMinimize = () => {
+    setIsSidebarMinimized(!isSidebarMinimized);
+  };
+
+  // Quick actions configuration
+  const quickActions = {
+    guest: [
+      { 
+        icon: Calendar, 
+        label: 'Book Appointment', 
+        action: () => handleQuickAction('book appointment')
+      },
+      { 
+        icon: History, 
+        label: 'General Advice', 
+        action: () => handleQuickAction('general advice')
+      },
+      { 
+        icon: LogIn, 
+        label: 'Create Account', 
+        action: () => handleCreateAccount()
+      }
+    ],
+    patient: [
+      { 
+        icon: Calendar, 
+        label: 'Book Appointment', 
+        action: () => handleQuickAction('book appointment')
+      },
+      { 
+        icon: FileText, 
+        label: 'Medical History', 
+        action: () => handleQuickAction('medical history')
+      },
+      { 
+        icon: Stethoscope, 
+        label: 'Symptoms Check', 
+        action: () => handleQuickAction('symptoms check')
+      },
+      { 
+        icon: Pill, 
+        label: 'Prescriptions', 
+        action: () => handleQuickAction('prescriptions')
+      }
+    ]
+  };
+
+  // Handle quick actions
+  const handleQuickAction = (action) => {
+    const userMessage = {
+      id: Date.now(),
+      text: action,
+      sender: 'user',
+      timestamp: new Date(),
+      type: 'quick_action'
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    // Simulate AI response based on action
+    setTimeout(() => {
+      const responses = {
+        'book appointment': "I can help you schedule an appointment! Let me show you the appointment scheduler.",
+        'symptoms check': "Please describe your symptoms in detail. I'll help assess them and provide guidance.",
+        'general advice': "I'm here to provide general medical advice. What specific health questions do you have?",
+        'medical history': "Accessing your medical history... You have 3 visits in the past year.",
+        'prescriptions': "Your current prescriptions: Amoxicillin (500mg), Vitamin D (1000 IU)",
+        'create account': "Creating an account will give you access to medical records, prescription management, and personalized care."
+      };
+
+      const botMessage = {
+        id: Date.now() + 1,
+        text: responses[action] || `I can help you with ${action}. What would you like to know?`,
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
+      setIsLoading(false);
+
+      // Open appointment scheduler for booking
+      if (action === 'book appointment') {
+        setTimeout(() => setShowAppointmentScheduler(true), 1000);
+      }
+    }, 1500);
+  };
+
+  // Handle create account
+  const handleCreateAccount = () => {
+    const userMessage = {
+      id: Date.now(),
+      text: "I want to create an account",
+      sender: 'user',
+      timestamp: new Date(),
+      type: 'text'
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      const botMessage = {
+        id: Date.now() + 1,
+        text: "Excellent choice! Creating an account gives you:\n• Personal medical records\n• Prescription management\n• Appointment history\n• Personalized health insights\n\nWould you like to register now?",
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  // Send message function
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
-    // Add user message to chat
     const userMessage = {
       id: Date.now(),
       text: inputText,
@@ -56,29 +216,32 @@ const ChatInterface = () => {
     setInputText('');
     setIsLoading(true);
 
-    // Mock AI response logic
+    // Simulate AI response
     setTimeout(() => {
       const responses = {
-        headache: "I understand you're experiencing a headache. How long have you had this pain? Is it mild, moderate, or severe?",
-        fever: "For fever symptoms, please monitor your temperature. Have you taken any medication? What is your current temperature?",
-        appointment: "I can help schedule an appointment. Let me open the appointment scheduler for you.",
-        emergency: "This sounds serious. For emergency situations, please go to your nearest emergency department immediately.",
-        default: "Thank you for sharing. Could you tell me more about your symptoms so I can better assist you?"
+        appointment: "I can help schedule an appointment. Opening the scheduler for you...",
+        emergency: "🚨 This sounds serious! For emergencies, please:\n• Go to the nearest hospital immediately\n• Call emergency services: 10111\n• Don't wait for a response here",
+        prescription: isGuest 
+          ? "For prescription management, you'll need to create an account to securely access your medical records."
+          : "I can help with your prescriptions. You have 2 active medications.",
+        symptoms: "Thank you for describing your symptoms. Based on what you've shared, I recommend monitoring and consulting a healthcare professional if symptoms persist.",
+        default: "Thank you for your message. I'm here to help with your healthcare needs. Could you provide more details so I can assist you better?"
       };
 
       let response = responses.default;
       const input = inputText.toLowerCase();
       
-      // Simple keyword-based response selection
-      if (input.includes('headache') || input.includes('pain')) response = responses.headache;
-      else if (input.includes('fever') || input.includes('temperature')) response = responses.fever;
-      else if (input.includes('appointment') || input.includes('schedule')) {
+      if (input.includes('appointment') || input.includes('schedule') || input.includes('book')) {
         response = responses.appointment;
-        setTimeout(() => setShowAppointmentScheduler(true), 500); // Show appointment modal
+        setTimeout(() => setShowAppointmentScheduler(true), 800);
+      } else if (input.includes('emergency') || input.includes('urgent') || input.includes('serious')) {
+        response = responses.emergency;
+      } else if (input.includes('prescription') || input.includes('medication') || input.includes('pill')) {
+        response = responses.prescription;
+      } else if (input.includes('pain') || input.includes('hurt') || input.includes('symptom')) {
+        response = responses.symptoms;
       }
-      else if (input.includes('emergency') || input.includes('urgent')) response = responses.emergency;
 
-      // Add bot response to chat
       const botMessage = {
         id: Date.now() + 1,
         text: response,
@@ -89,14 +252,14 @@ const ChatInterface = () => {
       
       setMessages(prev => [...prev, botMessage]);
       setIsLoading(false);
-    }, 1500);
+    }, 2000);
   };
 
-  // Handle file upload event
+  // Handle file upload
   const handleFileUpload = (file) => {
     const fileMessage = {
       id: Date.now(),
-      text: `Uploaded file: ${file.name}`,
+      text: `Uploaded medical document: ${file.name}`,
       sender: 'user',
       timestamp: new Date(),
       type: 'file',
@@ -104,13 +267,27 @@ const ChatInterface = () => {
     };
     setMessages(prev => [...prev, fileMessage]);
     setShowFileUpload(false);
+    
+    // Simulate AI processing file
+    setTimeout(() => {
+      const botMessage = {
+        id: Date.now() + 1,
+        text: isGuest 
+          ? "📄 I've received your document. To store this in your permanent medical records and enable secure access, please consider creating an account."
+          : "📄 Document received! I've added it to your medical records and will review it for relevant information.",
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }, 1500);
   };
 
-  // Handle appointment scheduling event
+  // Handle appointment scheduling
   const handleAppointmentSchedule = (appointmentData) => {
     const appointmentMessage = {
       id: Date.now(),
-      text: `Appointment scheduled for ${appointmentData.date} in ${appointmentData.department}`,
+      text: `Appointment scheduled: ${appointmentData.department} on ${appointmentData.date} at ${appointmentData.time}`,
       sender: 'user',
       timestamp: new Date(),
       type: 'appointment',
@@ -118,9 +295,23 @@ const ChatInterface = () => {
     };
     setMessages(prev => [...prev, appointmentMessage]);
     setShowAppointmentScheduler(false);
+    
+    // Follow-up message
+    setTimeout(() => {
+      const botMessage = {
+        id: Date.now() + 1,
+        text: isGuest
+          ? "✅ Appointment confirmed! Please bring your ID to the clinic. Consider creating an account to manage future appointments and access your medical history."
+          : "✅ Appointment confirmed! I've added it to your personal calendar and medical records.",
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }, 500);
   };
 
-  // Handle Enter key press for sending messages
+  // Handle Enter key press
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -128,116 +319,314 @@ const ChatInterface = () => {
     }
   };
 
-  return (
-    <div className="vitalai-chat">
-      {/* Header */}
-      <div className="chat-header">
-        <div className="header-left">
-          <div className="bot-avatar">
-            <Bot size={24} />
-          </div>
-          <div className="header-info">
-            <h3>VitalAI</h3>
-            <span className="status">Online • Medical Assistant</span>
-          </div>
-        </div>
-        {/* Language selection dropdown */}
-        <LanguageSelector 
-          selectedLanguage={selectedLanguage}
-          onLanguageChange={setSelectedLanguage}
-        />
-      </div>
+  // Get current user data
+  const currentUser = isGuest ? userData.guest : userData.patient;
 
-      {/* Messages Container */}
-      <div className="messages-container">
-        {messages.map((message) => (
-          <div key={message.id} className={`message ${message.sender}`}>
-            <div className="message-avatar">
-              {message.sender === 'bot' ? <Bot size={16} /> : <User size={16} />}
-            </div>
-            <div className="message-content">
-              {/* Render different message types */}
-              {message.type === 'file' ? (
-                <div className="file-message">
-                  <Paperclip size={16} />
-                  <span>{message.text}</span>
+  // Sidebar content component
+  const SidebarContent = () => (
+    <>
+      <div className="sidebar-header">
+        {!isSidebarMinimized && <h3>VitalAI Menu</h3>}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {!isMobile && (
+            <button 
+              className="minimize-btn"
+              onClick={toggleSidebarMinimize}
+              aria-label={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            >
+              {isSidebarMinimized ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            </button>
+          )}
+          {isMobile && (
+            <button 
+              className="close-sidebar-btn"
+              onClick={() => setShowSidebar(false)}
+              aria-label="Close menu"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="sidebar-content">
+        {/* User Profile */}
+        <div className="user-profile">
+          <div className="user-avatar-large">
+            <User size={24} />
+          </div>
+          {!isSidebarMinimized && (
+            <div className="user-details">
+              <h4>{currentUser.name}</h4>
+              <p className="user-id">{currentUser.id}</p>
+              {!isGuest && (
+                <div className="user-health">
+                  <span>Age: {currentUser.age}</span>
+                  <span>Blood: {currentUser.bloodType}</span>
                 </div>
-              ) : message.type === 'appointment' ? (
-                <div className="appointment-message">
-                  <Calendar size={16} />
-                  <span>{message.text}</span>
-                </div>
-              ) : (
-                <p>{message.text}</p>
               )}
-              {/* Message timestamp */}
-              <span className="timestamp">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="sidebar-nav">
+          {!isGuest ? (
+            <>
+              <button className="nav-item">
+                <History size={18} />
+                {!isSidebarMinimized && <span>Medical History</span>}
+              </button>
+              <button className="nav-item">
+                <Pill size={18} />
+                {!isSidebarMinimized && <span>Prescriptions</span>}
+              </button>
+              <button className="nav-item">
+                <Calendar size={18} />
+                {!isSidebarMinimized && <span>Appointments</span>}
+              </button>
+              <button className="nav-item">
+                <FileText size={18} />
+                {!isSidebarMinimized && <span>Medical Records</span>}
+              </button>
+            </>
+          ) : (
+            <button className="nav-item highlight" onClick={onLogin}>
+              <UserPlus size={18} />
+              {!isSidebarMinimized && <span>Login</span>}
+              {!isSidebarMinimized && <span className="nav-badge">Recommended</span>}
+            </button>
+          )}
+          
+          <button className="nav-item">
+            <Settings size={18} />
+            {!isSidebarMinimized && <span>Settings</span>}
+          </button>
+        </nav>
+
+        {/* Emergency Section */}
+        <div className="emergency-section">
+          {!isSidebarMinimized && (
+            <div className="emergency-header">
+              <AlertTriangle size={18} />
+              <span>Emergency Contacts</span>
+            </div>
+          )}
+          <button className="emergency-btn primary">
+            <Phone size={16} />
+            {!isSidebarMinimized && <span>Call Emergency: 10111</span>}
+          </button>
+          <button className="emergency-btn secondary">
+            <Phone size={16} />
+            {!isSidebarMinimized && <span>Clinic Emergency Line</span>}
+          </button>
+          
+          {onBackHome && (
+            <button className="back-home-btn" onClick={onBackHome}>
+              {!isSidebarMinimized ? "← Back to Homepage" : "←"}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="chat-interface">
+      {/* Desktop Sidebar - Always visible on large screens */}
+      {!isMobile && showSidebar && (
+        <div className={`sidebar-menu ${isSidebarMinimized ? 'minimized' : ''}`}>
+          <SidebarContent />
+        </div>
+      )}
+
+      {/* Main Chat Area */}
+      <div className="main-chat-area">
+        {/* Header */}
+        <div className="chat-header">
+          <button 
+            className="menu-btn"
+            onClick={() => {
+              if (isMobile) {
+                setShowSidebar(!showSidebar);
+              } else {
+                setIsSidebarMinimized(!isSidebarMinimized);
+              }
+            }}
+            aria-label={isMobile ? "Open menu" : isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            <Menu size={20} />
+          </button>
+          
+          <div className="header-center">
+            <div className="bot-avatar">
+              <Stethoscope size={18} />
+            </div>
+            <div className="header-info">
+              <h3>VitalAI</h3>
+              <span className="status">
+                {isGuest ? '👤 Guest Mode' : '✅ Verified Patient'} • Online
               </span>
             </div>
           </div>
-        ))}
-        
-        {/* Loading/typing indicator for bot */}
-        {isLoading && (
-          <div className="message bot">
-            <div className="message-avatar">
-              <Bot size={16} />
-            </div>
-            <div className="message-content">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
+
+          <div className="header-actions">
+  <LanguageSelector 
+    selectedLanguage={selectedLanguage}
+    onLanguageChange={setSelectedLanguage}
+    mobile={true}
+  />
+</div>
+
+        </div>
+
+        {/* Guest Notice */}
+        {isGuest && (
+          <div className="guest-notice">
+            <span className="guest-icon">👤</span>
+            <span>You're chatting as a guest. </span>
+            <button onClick={onLogin} className="guest-upgrade-btn">
+              Create account for full features →
+            </button>
           </div>
         )}
-        {/* Dummy div to scroll to bottom */}
-        <div ref={messagesEndRef} />
+
+        {/* Messages Container */}
+        <div className="messages-container">
+          {messages.map((message) => (
+            <div key={message.id} className={`message ${message.sender}`}>
+              <div className="message-avatar">
+                {message.sender === 'bot' ? 
+                  <div className="bot-avatar-icon">
+                    <Stethoscope size={14} />
+                  </div> : 
+                  <div className="user-avatar-icon">
+                    <User size={14} />
+                  </div>
+                }
+              </div>
+              <div className="message-content">
+                {message.type === 'file' && (
+                  <div className="file-message">
+                    <Paperclip size={16} />
+                    <span className="file-name">{message.text}</span>
+                    <button className="download-btn">
+                      <Download size={14} />
+                    </button>
+                  </div>
+                )}
+                {message.type === 'appointment' && (
+                  <div className="appointment-message">
+                    <Calendar size={16} />
+                    <span>{message.text}</span>
+                  </div>
+                )}
+                {message.type === 'text' && (
+                  <div className="text-message">
+                    {message.text.split('\n').map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                  </div>
+                )}
+                <span className="timestamp">
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+          ))}
+          
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="message bot">
+              <div className="message-avatar">
+                <div className="bot-avatar-icon">
+                  <Stethoscope size={14} />
+                </div>
+              </div>
+              <div className="message-content">
+                <div className="typing-indicator">
+                  <span>VitalAI is typing</span>
+                  <div className="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} className="scroll-anchor" />
+        </div>
+
+          {/* Quick Actions */}
+        <div className="quick-actions-bar">
+          {quickActions[isGuest ? 'guest' : userType].map((action, index) => (
+            <button
+              key={index}
+              className="quick-action-btn"
+              onClick={action.action}
+            >
+              <action.icon size={16} />
+              <span>{action.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Input Area */}
+        <div className="input-area">
+          <button 
+            className="attachment-btn"
+            onClick={() => {
+              console.log('Attachment button clicked');
+              setShowFileUpload(true);
+            }}
+            disabled={isGuest}
+            title={isGuest ? "Create account to upload files" : "Upload medical document"}
+            aria-label="Attach file"
+          >
+            <Paperclip size={20} />
+          </button>
+          
+          <div className="input-wrapper">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={isGuest ? "Describe your symptoms or ask a medical question..." : "Message VitalAI about your health concerns..."}
+              disabled={isLoading}
+              aria-label="Type your message"
+            />
+            {inputText && (
+              <button 
+                className="clear-btn"
+                onClick={() => setInputText('')}
+                aria-label="Clear message"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          
+          <button 
+            onClick={sendMessage} 
+            disabled={!inputText.trim() || isLoading}
+            className="send-button"
+            aria-label="Send message"
+          >
+            <Send size={20} />
+          </button>
+        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="quick-actions">
-        <button className="quick-action-btn" onClick={() => setShowAppointmentScheduler(true)}>
-          <Calendar size={16} />
-          Schedule Appointment
-        </button>
-        <button className="quick-action-btn" onClick={() => setShowFileUpload(true)}>
-          <Paperclip size={16} />
-          Upload Document
-        </button>
-      </div>
-
-      {/* Input Area */}
-      <div className="input-area">
-        {/* Attachment button */}
-        <button 
-          className="attachment-btn"
-          onClick={() => setShowFileUpload(true)}
-        >
-          <Paperclip size={18} />
-        </button>
-        
-        {/* Text input for user messages */}
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Describe your symptoms or ask for help..."
-          disabled={isLoading}
-        />
-        
-        {/* Send button */}
-        <button 
-          onClick={sendMessage} 
-          disabled={!inputText.trim() || isLoading}
-          className="send-button"
-        >
-          <Send size={18} />
-        </button>
-      </div>
+      {/* Mobile Sidebar Overlay */}
+      {isMobile && showSidebar && (
+        <div className="sidebar-overlay" onClick={() => setShowSidebar(false)}>
+          <div className="sidebar-menu" onClick={(e) => e.stopPropagation()}>
+            <SidebarContent />
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {showFileUpload && (
@@ -251,6 +640,7 @@ const ChatInterface = () => {
         <AppointmentScheduler 
           onSchedule={handleAppointmentSchedule}
           onClose={() => setShowAppointmentScheduler(false)}
+          isGuest={isGuest}
         />
       )}
     </div>

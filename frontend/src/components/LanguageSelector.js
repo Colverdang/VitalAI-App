@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import { ChevronDown, Globe } from 'lucide-react';
 import './LanguageSelector.css';
 
-// List of supported languages with their codes, English names, and native names
+// List of supported languages with only native names
 const LANGUAGES = [
-  { code: 'en', name: 'English', native: 'English' },
-  { code: 'zu', name: 'Zulu', native: 'isiZulu' },
-  { code: 'xh', name: 'Xhosa', native: 'isiXhosa' },
-  { code: 'st', name: 'Southern Sotho', native: 'Sesotho' },
-  { code: 'tn', name: 'Tswana', native: 'Setswana' },
-  { code: 'nso', name: 'Northern Sotho', native: 'Sepedi' },
-  { code: 'ss', name: 'Swati', native: 'siSwati' },
-  { code: 've', name: 'Venda', native: 'Tshivenda' },
-  { code: 'ts', name: 'Tsonga', native: 'Xitsonga' },
-  { code: 'nr', name: 'Southern Ndebele', native: 'isiNdebele' },
-  { code: 'af', name: 'Afrikaans', native: 'Afrikaans' },
-  { code: 'sasl', name: 'South African Sign Language', native: 'SASL' }
+  { name: 'English' },
+  { name: 'isiZulu' },
+  { name: 'isiXhosa' },
+  { name: 'Sesotho' },
+  { name: 'Setswana' },
+  { name: 'Sepedi' },
+  { name: 'siSwati' },
+  { name: 'Tshivenda' },
+  { name: 'Xitsonga' },
+  { name: 'isiNdebele' },
+  { name: 'Afrikaans' },
 ];
 
 // LanguageSelector component allows users to select a language from a dropdown
@@ -24,11 +23,11 @@ const LanguageSelector = ({ selectedLanguage, onLanguageChange }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Find the currently selected language object, default to the first language if not found
-  const selectedLang = LANGUAGES.find(lang => lang.code === selectedLanguage) || LANGUAGES[0];
+  const selectedLang = LANGUAGES.find(lang => lang.name === selectedLanguage) || LANGUAGES[0];
 
   // Handle language selection: call parent callback and close dropdown
-  const handleLanguageSelect = (languageCode) => {
-    onLanguageChange(languageCode);
+  const handleLanguageSelect = (languageName) => {
+    onLanguageChange(languageName);
     setIsOpen(false);
   };
 
@@ -38,10 +37,12 @@ const LanguageSelector = ({ selectedLanguage, onLanguageChange }) => {
       <button 
         className="language-trigger"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
       >
         <Globe size={16} /> {/* Globe icon */}
-        <span>{selectedLang.code.toUpperCase()}</span> {/* Current language code */}
-        <ChevronDown size={16} className={isOpen ? 'rotate-180' : ''} /> {/* Dropdown arrow */}
+        <span className="selected-language-text">{selectedLang.name}</span> {/* Current language name */}
+        <ChevronDown size={16} className={`chevron ${isOpen ? 'rotate-180' : ''}`} /> {/* Dropdown arrow */}
       </button>
 
       {/* Dropdown menu with language options */}
@@ -49,17 +50,18 @@ const LanguageSelector = ({ selectedLanguage, onLanguageChange }) => {
         <div className="language-dropdown">
           {LANGUAGES.map((language) => (
             <button
-              key={language.code}
-              className={`language-option ${selectedLanguage === language.code ? 'selected' : ''}`}
-              onClick={() => handleLanguageSelect(language.code)}
+              key={language.name}
+              className={`language-option ${selectedLanguage === language.name ? 'selected' : ''}`}
+              onClick={() => handleLanguageSelect(language.name)}
+              role="option"
+              aria-selected={selectedLanguage === language.name}
             >
               <div className="language-info">
-                <span className="language-name">{language.name}</span> {/* English name */}
-                <span className="language-native">{language.native}</span> {/* Native name */}
+                <span className="language-native">{language.name}</span> {/* Native name only */}
               </div>
               {/* Indicator for selected language */}
-              {selectedLanguage === language.code && (
-                <div className="selected-indicator"></div>
+              {selectedLanguage === language.name && (
+                <div className="selected-indicator" aria-hidden="true"></div>
               )}
             </button>
           ))}
@@ -68,6 +70,5 @@ const LanguageSelector = ({ selectedLanguage, onLanguageChange }) => {
     </div>
   );
 };
-
 
 export default LanguageSelector;

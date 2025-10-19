@@ -1,35 +1,9 @@
-import React, { useState } from 'react';
+// Home.js - UPDATED
+import React from 'react';
 import { Stethoscope, MessageCircle, Calendar, Upload, Users, Shield } from 'lucide-react';
-import ChatInterface from '../components/ChatInterface';
-import Login from '../components/Login';
 import './Home.css';
 
-const Home = () => {
-  const [currentView, setCurrentView] = useState('welcome');
-  const [user, setUser] = useState(null);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-    setCurrentView('chat');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setCurrentView('welcome');
-  };
-
-  // Render different views based on state
-  if (currentView === 'chat') {
-    // Fix: Check if user exists before accessing userType
-    const userType = user ? user.userType : 'patient';
-    return <ChatInterface userType={userType} />;
-  }
-
-  if (currentView === 'login') {
-    return <Login onLogin={handleLogin} onSwitchToRegister={() => setCurrentView('welcome')} />;
-  }
-
-  // Welcome/Landing Page
+const Home = ({ onLogin, onRegister, onKiosk, onChat }) => {
   return (
     <div className="home-container">
       {/* Header */}
@@ -40,8 +14,9 @@ const Home = () => {
             <h1>VitalAI</h1>
           </div>
           <nav className="nav-links">
-            <button onClick={() => setCurrentView('login')} className="nav-link">Staff Login</button>
-            <button onClick={() => setCurrentView('chat')} className="nav-link primary">Get Started</button>
+            <button onClick={onChat} className="nav-link">Start Chat</button>
+            <button onClick={onLogin} className="nav-link">Login</button>
+            <button onClick={onKiosk} className="nav-link">Clinic Kiosk</button>
           </nav>
         </div>
       </header>
@@ -52,25 +27,28 @@ const Home = () => {
           <div className="hero-text">
             <h1>AI-Powered Healthcare Assistance</h1>
             <p className="hero-subtitle">
-              Reducing patient backlogs in South African hospitals through intelligent automation
+              Get instant medical help - No login required
             </p>
             <p className="hero-description">
-              VitalAI helps you schedule appointments, get medical advice, and manage your healthcare 
-              needs through an intelligent chatbot available 24/7 in multiple languages.
+              Start chatting with VitalAI immediately for symptom checks, appointment scheduling, 
+              and medical advice. Your privacy and immediate access are our priority.
             </p>
             <div className="hero-actions">
               <button 
-                onClick={() => setCurrentView('chat')}
-                className="cta-button primary"
+                onClick={onChat}
+                className="cta-button primary large"
               >
-                Start Chat with VitalAI
+                <MessageCircle size={20} />
+                Start Free Chat Now
               </button>
-              <button 
-                onClick={() => setCurrentView('login')}
-                className="cta-button secondary"
-              >
-                Healthcare Staff Login
-              </button>
+              <div className="secondary-actions">
+                <button onClick={onLogin} className="cta-button secondary">
+                  Patient Login
+                </button>
+                <button onClick={onKiosk} className="cta-button secondary">
+                  Clinic Kiosk
+                </button>
+              </div>
             </div>
           </div>
           <div className="hero-visual">
@@ -83,14 +61,14 @@ const Home = () => {
               </div>
               <div className="chat-message user">
                 <div className="message-content">
-                  I need to schedule an appointment
+                  I have a headache and fever
                 </div>
                 <div className="message-avatar">U</div>
               </div>
               <div className="chat-message bot">
                 <div className="message-avatar">V</div>
                 <div className="message-content">
-                  I can help with that! Which department do you need?
+                  I can help assess your symptoms. How long have you had these symptoms?
                 </div>
               </div>
             </div>
@@ -101,56 +79,57 @@ const Home = () => {
       {/* Features Section */}
       <section className="features-section">
         <div className="container">
-          <h2>How VitalAI Helps You</h2>
+          <h2>Immediate Healthcare Access</h2>
           <div className="features-grid">
             <div className="feature-card">
               <MessageCircle className="feature-icon" />
-              <h3>24/7 Medical Assistance</h3>
-              <p>Get instant responses to medical questions anytime, anywhere</p>
+              <h3>No Login Required</h3>
+              <p>Start chatting immediately without creating an account</p>
             </div>
             <div className="feature-card">
               <Calendar className="feature-icon" />
-              <h3>Easy Appointment Scheduling</h3>
-              <p>Book hospital appointments quickly without phone calls</p>
+              <h3>Quick Appointments</h3>
+              <p>Schedule hospital appointments directly through chat</p>
             </div>
             <div className="feature-card">
               <Upload className="feature-icon" />
-              <h3>Document Management</h3>
-              <p>Upload and manage medical documents securely</p>
+              <h3>Document Upload</h3>
+              <p>Share medical documents securely during your chat</p>
             </div>
             <div className="feature-card">
               <Users className="feature-icon" />
               <h3>Multilingual Support</h3>
-              <p>Available in English, Zulu, Xhosa, Afrikaans, and Sotho</p>
+              <p>Available in 11 South African languages</p>
             </div>
             <div className="feature-card">
               <Shield className="feature-icon" />
-              <h3>Secure & Private</h3>
-              <p>Your medical information is protected and confidential</p>
+              <h3>Private & Secure</h3>
+              <p>Your conversations are encrypted and confidential</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="stats-section">
+      {/* Benefits Section */}
+      <section className="benefits-section">
         <div className="container">
-          <div className="stats-grid">
-            <div className="stat">
-              <h3>50%</h3>
-              <p>Reduction in Admin Time</p>
+          <h2>Why Chat Without Login?</h2>
+          <div className="benefits-grid">
+            <div className="benefit-item">
+              <h3>⚡ Instant Access</h3>
+              <p>Get medical assistance immediately when you need it most</p>
             </div>
-            <div className="stat">
-              <h3>24/7</h3>
-              <p>Availability</p>
+            <div className="benefit-item">
+              <h3>🔒 Privacy First</h3>
+              <p>No personal information required for basic assistance</p>
             </div>
-            <div className="stat">
-              <h3>5</h3>
-              <p>Languages Supported</p>
+            <div className="benefit-item">
+              <h3>💬 Natural Conversation</h3>
+              <p>Chat naturally like you would with a healthcare professional</p>
             </div>
-            <div className="stat">
-              <h3>1000+</h3>
-              <p>Patients Served</p>
+            <div className="benefit-item">
+              <h3>🏥 South African Focus</h3>
+              <p>Designed specifically for South African healthcare needs</p>
             </div>
           </div>
         </div>
@@ -159,21 +138,24 @@ const Home = () => {
       {/* CTA Section */}
       <section className="cta-section">
         <div className="container">
-          <h2>Ready to Get Started?</h2>
-          <p>Join thousands of patients using VitalAI for better healthcare access</p>
+          <h2>Ready to Get Immediate Help?</h2>
+          <p>Thousands of South Africans use VitalAI for quick medical assistance</p>
           <button 
-            onClick={() => setCurrentView('chat')}
-            className="cta-button large"
+            onClick={onChat}
+            className="cta-button primary large"
           >
-            Start Chatting with VitalAI
+            <MessageCircle size={20} />
+            Start Chatting Now - It's Free
           </button>
+          <p className="cta-note">
+            No registration required • 100% private • Available 24/7
+          </p>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="home-footer">
         <div className="container">
-          <p>&copy; 2024 VitalAI. AI-powered healthcare assistance for South Africa.</p>
+          <p>&copy; 2024 VitalAI. Immediate healthcare assistance for South Africa.</p>
         </div>
       </footer>
     </div>

@@ -189,7 +189,7 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
             className="login-btn"
             disabled={isLoading}
           >
-            {isLoading ? 'Creating Account...' : 'Create Patient Account'}
+            {isLoading ? 'Loging in...' : 'login'}
           </button>
         </form>
 
