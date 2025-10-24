@@ -1,91 +1,69 @@
-// Login.js - UPDATED
+// frontend/src/components/Login.js - UPDATED
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, User, Stethoscope, IdCard, MessageCircle } from 'lucide-react';
-import './Login.css';
+import { Lock, Eye, EyeOff, Stethoscope, MessageCircle, IdCard } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import './Auth.css';
 
 const Login = ({ onLogin, onSwitchToRegister, onBackHome, onChatAsGuest }) => {
   const [formData, setFormData] = useState({
-    userType: 'patient',
-    idNumber: '',
-    staffNumber: '',
+    identifier: '',
+    identifierType: 'id', // id | passport | file
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { login } = useAuth();
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate ID if it's a South African ID number
+    if (formData.identifierType === 'id') {
+      const idRegex = /^[0-9]{13}$/;
+      if (!idRegex.test(formData.identifier)) {
+        setError('Please enter a valid 13-digit South African ID number');
+        return;
+      }
+    }
+
     setIsLoading(true);
+    setError('');
 
-    // Mock login
-    setTimeout(() => {
-      const identityNumber = formData.userType === 'patient' ? formData.idNumber : formData.staffNumber;
-      const userData = {
-        id: 'user-' + Date.now(),
-        userType: formData.userType,
-        identityNumber: identityNumber,
-        name: formData.userType === 'patient' ? 'Patient User' : 'Staff Member',
-        avatar: `https://ui-avatars.com/api/?name=${formData.userType}&background=667eea&color=fff`
-      };
-      onLogin(userData);
+    try {
+      const result = await login(formData.identifier, formData.password);
+      
+      if (result.success) {
+        onLogin(result.user);
+      } else {
+        setError(result.error || 'Login failed');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+      console.error('Login error:', error);
+    } finally {
       setIsLoading(false);
-    }, 1500);
-  };
-
-  const getIdentityField = () => {
-    if (formData.userType === 'patient') {
-      return (
-        <div className="form-group">
-          <label htmlFor="idNumber">ID/Passport Number</label>
-          <div className="input-wrapper">
-            <IdCard size={18} className="input-icon" />
-            <input
-              id="idNumber"
-              type="text"
-              value={formData.idNumber}
-              onChange={(e) => handleInputChange('idNumber', e.target.value)}
-              placeholder="Enter your ID or passport number"
-              required
-            />
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="form-group">
-          <label htmlFor="staffNumber">Staff ID</label>
-          <div className="input-wrapper">
-            <IdCard size={18} className="input-icon" />
-            <input
-              id="staffNumber"
-              type="text"
-              value={formData.staffNumber}
-              onChange={(e) => handleInputChange('staffNumber', e.target.value)}
-              placeholder="Enter your staff ID"
-              required
-            />
-          </div>
-        </div>
-      );
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="logo">
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo">
             <Stethoscope size={32} />
             <h1>VitalAI</h1>
           </div>
-          <p>Sign in to your account or chat as guest</p>
+          <p>Sign in with your credentials or chat as guest</p>
         </div>
 
         {/* Guest Chat Option */}
@@ -107,30 +85,54 @@ const Login = ({ onLogin, onSwitchToRegister, onBackHome, onChatAsGuest }) => {
           <span>Or sign in</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          {/* Identifier Type */}
           <div className="form-group">
-            <label>User Type</label>
-            <div className="user-type-selector">
-              <button
-                type="button"
-                className={`user-type-btn ${formData.userType === 'patient' ? 'active' : ''}`}
-                onClick={() => handleInputChange('userType', 'patient')}
+            <label htmlFor="identifierType">ID Type</label>
+            <div className="input-wrapper">
+              <IdCard size={18} className="input-icon" />
+              <select
+                id="identifierType"
+                value={formData.identifierType}
+                onChange={(e) => handleInputChange('identifierType', e.target.value)}
+                required
               >
-                <User size={16} />
-                Patient
-              </button>
-              <button
-                type="button"
-                className={`user-type-btn ${formData.userType === 'staff' ? 'active' : ''}`}
-                onClick={() => handleInputChange('userType', 'staff')}
-              >
-                <Stethoscope size={16} />
-                Staff
-              </button>
+                <option value="id">South African ID Number</option>
+                <option value="passport">Passport Number</option>
+                <option value="file">Hospital File Number</option>
+              </select>
             </div>
           </div>
 
-          {getIdentityField()}
+          {/* Identifier */}
+          <div className="form-group">
+            <label htmlFor="identifier">
+              {formData.identifierType === 'id'
+                ? 'ID Number'
+                : formData.identifierType === 'passport'
+                ? 'Passport Number'
+                : 'File Number'}
+            </label>
+            <div className="input-wrapper">
+              <IdCard size={18} className="input-icon" />
+              <input
+                id="identifier"
+                type="text"
+                value={formData.identifier}
+                onChange={(e) => handleInputChange('identifier', e.target.value)}
+                placeholder={`Enter your ${formData.identifierType === 'id' ? '13-digit ID number' : formData.identifierType}`}
+                required
+                pattern={formData.identifierType === 'id' ? '[0-9]{13}' : '.*'}
+                title={formData.identifierType === 'id' ? 'Please enter a valid 13-digit South African ID number' : ''}
+              />
+            </div>
+          </div>
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
@@ -165,14 +167,14 @@ const Login = ({ onLogin, onSwitchToRegister, onBackHome, onChatAsGuest }) => {
 
           <button 
             type="submit" 
-            className="login-btn"
+            className="auth-btn"
             disabled={isLoading}
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
-        <div className="login-footer">
+        <div className="auth-footer">
           <p>
             Don't have an account?{' '}
             <button className="switch-link" onClick={onSwitchToRegister}>

@@ -1,64 +1,129 @@
+// frontend/src/services/api.js - FIXED VERSION
 import axios from 'axios';
+import config from '../utils/config';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
+// Create axios instance with config from environment variables
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
+  baseURL: config.api.url,
+  timeout: config.timeouts.api,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Mock data for development
-const mockResponses = {
-  symptoms: {
-    headache: "I understand you're experiencing a headache. How long have you had this pain?",
-    fever: "For fever symptoms, please monitor your temperature. Have you taken any medication?",
-    appointment: "I can help schedule an appointment. Which department do you need?",
-    emergency: "This sounds serious. Please proceed to emergency care immediately."
-  }
-};
-
-export const chatAPI = {
-  sendMessage: async (message, language = 'en') => {
-    try {
-      // For now, use mock responses
-      const mockResponse = getMockResponse(message);
-      return { data: { reply: mockResponse, triage_level: 'MEDIUM', department: 'General Practice' } };
-      
-      // TODO: Uncomment when backend is ready
-      // return await api.post('/chat', { message, language });
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log requests in development - FIXED CONFIG ACCESS
+    if (config.development?.debug || process.env.NODE_ENV === 'development') {
+      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, config.data);
+    }
+    
+    return config;
   },
-
-  scheduleAppointment: async (appointmentData) => {
-    // Mock appointment scheduling
-    return { 
-      data: { 
-        success: true, 
-        appointment_id: 'APT-' + Date.now(),
-        date: appointmentData.date,
-        department: appointmentData.department
-      } 
-    };
+  (error) => {
+    return Promise.reject(error);
   }
+);
+
+// Response interceptor to handle errors - FIXED CONFIG ACCESS
+api.interceptors.response.use(
+  (response) => {
+    // Log responses in development
+    if (config.development?.debug || process.env.NODE_ENV === 'development') {
+      console.log(`API Response: ${response.status} ${response.config.url}`, response.data);
+    }
+    return response;
+  },
+  (error) => {
+    // FIXED: Safe config access
+    const debugMode = config.development?.debug || process.env.NODE_ENV === 'development';
+    if (debugMode) {
+      console.error(`API Error: ${error.response?.status}`, error.response?.data);
+    }
+    
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API calls - UPDATED FOR IDENTIFIER LOGIN
+export const authAPI = {
+  login: (identifier, password) => 
+    api.post('/auth/login', { identifier, password }),
+  
+  register: (userData) => 
+    api.post('/auth/register', userData),
+  
+  getProfile: () => 
+    api.get('/auth/me'),
+  
+  debugToken: () => 
+    api.get('/auth/debug/me'),
+  
+  listUsers: () => 
+    api.get('/auth/users'),
 };
 
-const getMockResponse = (userInput) => {
-  const input = userInput.toLowerCase();
+// Chat API calls
+export const chatAPI = {
+  sendMessage: (prompt) => 
+    api.post('/chat', { prompt }, { timeout: config.timeouts.chat }),
+};
+
+// Appointments API calls
+export const appointmentsAPI = {
+  getAppointments: (params = {}) => 
+    api.get('/appointments', { params }),
   
-  if (input.includes('headache') || input.includes('pain')) {
-    return mockResponses.symptoms.headache;
-  } else if (input.includes('fever') || input.includes('temperature')) {
-    return mockResponses.symptoms.fever;
-  } else if (input.includes('appointment') || input.includes('schedule')) {
-    return mockResponses.symptoms.appointment;
-  } else if (input.includes('emergency') || input.includes('urgent')) {
-    return mockResponses.symptoms.emergency;
-  } else {
-    return "Thank you for sharing. Could you tell me more about your symptoms so I can better assist you?";
-  }
+  createAppointment: (appointmentData) => 
+    api.post('/appointments', appointmentData),
+  
+  updateAppointment: (id, appointmentData) => 
+    api.put(`/appointments/id/${id}`, appointmentData),
+  
+  deleteAppointment: (id) => 
+    api.delete(`/appointments/id/${id}`),
+  
+  getAppointment: (id) => 
+    api.get(`/appointments/id/${id}`),
+  
+  getAvailableSlots: () => 
+    api.get('/appointments/slots'),
+};
+
+// FAQ API calls
+export const faqAPI = {
+  getFAQs: (params = {}) => 
+    api.get('/faq', { params }),
+  
+  createFAQ: (faqData) => 
+    api.post('/faq', faqData),
+  
+  updateFAQ: (id, faqData) => 
+    api.put(`/faq/id/${id}`, faqData),
+  
+  deleteFAQ: (id) => 
+    api.delete(`/faq/id/${id}`),
+  
+  getFAQ: (id) => 
+    api.get(`/faq/id/${id}`),
+};
+
+// Health check
+export const healthAPI = {
+  checkHealth: () => 
+    api.get('/health'),
 };
 
 export default api;

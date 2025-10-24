@@ -1,5 +1,6 @@
-// App.js - UPDATED
-import React, { useState } from 'react';
+// App.js - COMPLETE UPDATED VERSION WITH FIXES
+import React, { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Home from './pages/Home';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -10,12 +11,74 @@ import Kiosk from './pages/Kiosk';
 import ChatInterface from './components/ChatInterface';
 import './App.css';
 
-const App = () => {
+// Main App Content Component
+const AppContent = () => {
   const [currentView, setCurrentView] = useState('home');
-  const [user, setUser] = useState(null);
+  const { user, logout, loading } = useAuth();
+
+  // Backend connection test - MOVED INSIDE THE COMPONENT
+  useEffect(() => {
+    const testBackendConnection = async () => {
+      try {
+        console.log('Testing backend connection to:', process.env.REACT_APP_API_URL);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/health`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Backend connection successful:', data);
+        return true;
+      } catch (error) {
+        console.error('❌ Backend connection failed:', error.message);
+        console.log('💡 Please ensure:');
+        console.log('1. Backend server is running on port 8000');
+        console.log('2. CORS is properly configured');
+        console.log('3. The /api/health endpoint exists');
+        return false;
+      }
+    };
+
+    // Test specific endpoints
+    const testEndpoints = async () => {
+      const endpoints = ['/health', '/auth/login', '/auth/register'];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`);
+          console.log(`🔍 ${endpoint}: ${response.status} ${response.statusText}`);
+        } catch (error) {
+          console.error(`🔍 ${endpoint}:`, error.message);
+        }
+      }
+    };
+
+    testBackendConnection().then(isConnected => {
+      if (isConnected) {
+        testEndpoints();
+      }
+    });
+  }, []);
+
+  // Redirect based on authentication status
+  useEffect(() => {
+    if (!loading && user) {
+      // User is logged in, redirect to appropriate dashboard
+      if (user.userType === 'patient') {
+        setCurrentView('patient-portal');
+      } else if (user.userType === 'staff') {
+        setCurrentView('staff-dashboard');
+      } else if (user.userType === 'admin') {
+        setCurrentView('admin-dashboard');
+      }
+    } else if (!loading && !user && currentView !== 'home' && currentView !== 'login' && currentView !== 'register' && currentView !== 'chat') {
+      // User is not logged in and not on public pages, redirect to home
+      setCurrentView('home');
+    }
+  }, [user, loading, currentView]);
 
   const handleLogin = (userData) => {
-    setUser(userData);
     console.log('User logged in:', userData);
     
     // Redirect based on user type
@@ -29,7 +92,6 @@ const App = () => {
   };
 
   const handleRegister = (userData) => {
-    setUser(userData);
     console.log('User registered:', userData);
     if (userData.userType === 'patient') {
       setCurrentView('patient-portal');
@@ -37,20 +99,40 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    setUser(null);
+    logout();
     setCurrentView('home');
   };
+
+  const handleChatAsGuest = () => {
+    setCurrentView('chat');
+  };
+
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading VitalAI...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Render different views
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <Home 
-          onLogin={() => setCurrentView('login')} 
-          onRegister={() => setCurrentView('register')}
-          onKiosk={() => setCurrentView('kiosk')}
-          onChat={() => setCurrentView('chat')} // NEW: Direct chat access
-        />;
+        return (
+          <Home 
+            onLogin={() => setCurrentView('login')} 
+            onRegister={() => setCurrentView('register')}
+            onKiosk={() => setCurrentView('kiosk')}
+            onChat={() => setCurrentView('chat')}
+            user={user}
+            onLogout={handleLogout}
+          />
+        );
       
       case 'login':
         return (
@@ -58,7 +140,7 @@ const App = () => {
             onLogin={handleLogin}
             onSwitchToRegister={() => setCurrentView('register')}
             onBackHome={() => setCurrentView('home')}
-            onChatAsGuest={() => setCurrentView('chat')} // NEW: Guest chat option
+            onChatAsGuest={handleChatAsGuest}
           />
         );
       
@@ -68,24 +150,60 @@ const App = () => {
             onRegister={handleRegister}
             onSwitchToLogin={() => setCurrentView('login')}
             onBackHome={() => setCurrentView('home')}
-            onChatAsGuest={() => setCurrentView('chat')} // NEW: Guest chat option
+            onChatAsGuest={handleChatAsGuest}
           />
         );
       
       case 'kiosk':
-        return <Kiosk onBackHome={() => setCurrentView('home')} />;
+        return (
+          <Kiosk 
+            onBackHome={() => setCurrentView('home')}
+            onLogin={() => setCurrentView('login')}
+          />
+        );
       
-      case 'chat': // NEW: Direct chat interface
-        return <ChatInterface userType="patient" onBackHome={() => setCurrentView('home')} />;
+      case 'chat':
+        return (
+          <ChatInterface 
+            userType={user?.userType || 'guest'} 
+            onBackHome={() => setCurrentView('home')}
+            onLogin={() => setCurrentView('login')}
+            user={user}
+          />
+        );
       
       case 'patient-portal':
-        return user ? <PatientPortal user={user} onLogout={handleLogout} /> : <Home />;
+        return user ? (
+          <PatientPortal 
+            user={user} 
+            onLogout={handleLogout}
+            onBackHome={() => setCurrentView('home')}
+          />
+        ) : (
+          <Home />
+        );
       
       case 'staff-dashboard':
-        return user ? <StaffDashboard user={user} onLogout={handleLogout} /> : <Home />;
+        return user ? (
+          <StaffDashboard 
+            user={user} 
+            onLogout={handleLogout}
+            onBackHome={() => setCurrentView('home')}
+          />
+        ) : (
+          <Home />
+        );
       
       case 'admin-dashboard':
-        return user ? <AdminDashboard user={user} onLogout={handleLogout} /> : <Home />;
+        return user ? (
+          <AdminDashboard 
+            user={user} 
+            onLogout={handleLogout}
+            onBackHome={() => setCurrentView('home')}
+          />
+        ) : (
+          <Home />
+        );
       
       default:
         return <Home />;
@@ -96,6 +214,15 @@ const App = () => {
     <div className="App">
       {renderView()}
     </div>
+  );
+};
+
+// Main App Component with AuthProvider
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

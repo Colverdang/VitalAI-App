@@ -1,3 +1,4 @@
+// frontend/src/components/FileUpload.js - FIXED
 import React, { useRef, useState } from 'react';
 import { X, Upload, File, Image } from 'lucide-react';
 import './FileUpload.css';

@@ -1,19 +1,19 @@
-// ChatInterface.js - WITH SIDEBAR MINIMIZE FEATURE
-import React, { useState, useRef, useEffect } from 'react';
+// frontend/src/components/ChatInterface.js - COMPLETELY REFRESHED
+import { useState, useRef, useEffect } from 'react';
 import { 
-  Send, Bot, User, Paperclip, Calendar, History, 
+  Send, User, Paperclip, Calendar, History, 
   FileText, Settings, Menu, X, Stethoscope,
-  Phone, Download, Users, BarChart3, AlertTriangle,
-  LogIn, UserPlus, Heart, Pill, Clock, MapPin,
-  ChevronLeft, ChevronRight
+  Phone, Download, AlertTriangle,
+  LogIn, UserPlus, Pill
 } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
 import FileUpload from './FileUpload';
 import AppointmentScheduler from './AppointmentScheduler';
+import { chatAPI } from '../services/api';
 import './ChatInterface.css';
 
-const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
-  // State management
+const ChatInterface = ({ userType = 'patient', onBackHome, onLogin, user }) => {
+  // All state variables properly defined
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -30,10 +30,11 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showAppointmentScheduler, setShowAppointmentScheduler] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [isGuest, setIsGuest] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  
   const messagesEndRef = useRef(null);
+  const isGuest = !user;
 
   // Mock data for demonstration
   const userData = {
@@ -55,39 +56,6 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
     }
   };
 
-  // Handle responsive layout
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      if (mobile) {
-        setShowSidebar(false); // Hide sidebar on mobile by default
-        setIsSidebarMinimized(false); // Reset minimized state on mobile
-      } else {
-        setShowSidebar(true); // Always show sidebar on desktop
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial check
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Scroll to bottom when messages change
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Toggle sidebar minimize
-  const toggleSidebarMinimize = () => {
-    setIsSidebarMinimized(!isSidebarMinimized);
-  };
-
   // Quick actions configuration
   const quickActions = {
     guest: [
@@ -103,7 +71,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
       },
       { 
         icon: LogIn, 
-        label: 'Create Account', 
+        label: 'Login / sign up', 
         action: () => handleCreateAccount()
       }
     ],
@@ -129,6 +97,39 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
         action: () => handleQuickAction('prescriptions')
       }
     ]
+  };
+
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setShowSidebar(false);
+        setIsSidebarMinimized(false);
+      } else {
+        setShowSidebar(true);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Toggle sidebar minimize
+  const toggleSidebarMinimize = () => {
+    setIsSidebarMinimized(!isSidebarMinimized);
   };
 
   // Handle quick actions
@@ -175,29 +176,14 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
 
   // Handle create account
   const handleCreateAccount = () => {
-    const userMessage = {
-      id: Date.now(),
-      text: "I want to create an account",
-      sender: 'user',
-      timestamp: new Date(),
-      type: 'text'
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-
+    // Redirect user to login page (use onLogin prop if provided, otherwise fallback to a route)
     setTimeout(() => {
-      const botMessage = {
-        id: Date.now() + 1,
-        text: "Excellent choice! Creating an account gives you:\n• Personal medical records\n• Prescription management\n• Appointment history\n• Personalized health insights\n\nWould you like to register now?",
-        sender: 'bot',
-        timestamp: new Date(),
-        type: 'text'
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 1000);
+      if (typeof onLogin === 'function') {
+        onLogin();
+      } else {
+        window.location.href = '/login';
+      }
+    }, 1200);
   };
 
   // Send message function
@@ -216,43 +202,31 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
     setInputText('');
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = {
-        appointment: "I can help schedule an appointment. Opening the scheduler for you...",
-        emergency: "🚨 This sounds serious! For emergencies, please:\n• Go to the nearest hospital immediately\n• Call emergency services: 10111\n• Don't wait for a response here",
-        prescription: isGuest 
-          ? "For prescription management, you'll need to create an account to securely access your medical records."
-          : "I can help with your prescriptions. You have 2 active medications.",
-        symptoms: "Thank you for describing your symptoms. Based on what you've shared, I recommend monitoring and consulting a healthcare professional if symptoms persist.",
-        default: "Thank you for your message. I'm here to help with your healthcare needs. Could you provide more details so I can assist you better?"
-      };
-
-      let response = responses.default;
-      const input = inputText.toLowerCase();
-      
-      if (input.includes('appointment') || input.includes('schedule') || input.includes('book')) {
-        response = responses.appointment;
-        setTimeout(() => setShowAppointmentScheduler(true), 800);
-      } else if (input.includes('emergency') || input.includes('urgent') || input.includes('serious')) {
-        response = responses.emergency;
-      } else if (input.includes('prescription') || input.includes('medication') || input.includes('pill')) {
-        response = responses.prescription;
-      } else if (input.includes('pain') || input.includes('hurt') || input.includes('symptom')) {
-        response = responses.symptoms;
-      }
-
+    try {
+      // Use real backend API
+      const response = await chatAPI.sendMessage(inputText);
       const botMessage = {
         id: Date.now() + 1,
-        text: response,
+        text: response.data.reply,
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
       };
       
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: 'Sorry, I encountered an error. Please try again.',
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   // Handle file upload
@@ -272,9 +246,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
     setTimeout(() => {
       const botMessage = {
         id: Date.now() + 1,
-        text: isGuest 
-          ? "📄 I've received your document. To store this in your permanent medical records and enable secure access, please consider creating an account."
-          : "📄 Document received! I've added it to your medical records and will review it for relevant information.",
+        text: "📄 Document received! I've added it to your medical records.",
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
@@ -300,9 +272,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
     setTimeout(() => {
       const botMessage = {
         id: Date.now() + 1,
-        text: isGuest
-          ? "✅ Appointment confirmed! Please bring your ID to the clinic. Consider creating an account to manage future appointments and access your medical history."
-          : "✅ Appointment confirmed! I've added it to your personal calendar and medical records.",
+        text: "✅ Appointment confirmed! I've added it to your personal calendar.",
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
@@ -334,7 +304,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
               onClick={toggleSidebarMinimize}
               aria-label={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
             >
-              {isSidebarMinimized ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {isSidebarMinimized ? '>' : '<'}
             </button>
           )}
           {isMobile && (
@@ -433,7 +403,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
 
   return (
     <div className="chat-interface">
-      {/* Desktop Sidebar - Always visible on large screens */}
+      {/* Desktop Sidebar */}
       {!isMobile && showSidebar && (
         <div className={`sidebar-menu ${isSidebarMinimized ? 'minimized' : ''}`}>
           <SidebarContent />
@@ -471,13 +441,11 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
           </div>
 
           <div className="header-actions">
-  <LanguageSelector 
-    selectedLanguage={selectedLanguage}
-    onLanguageChange={setSelectedLanguage}
-    mobile={true}
-  />
-</div>
-
+            <LanguageSelector 
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={setSelectedLanguage}
+            />
+          </div>
         </div>
 
         {/* Guest Notice */}
@@ -486,7 +454,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
             <span className="guest-icon">👤</span>
             <span>You're chatting as a guest. </span>
             <button onClick={onLogin} className="guest-upgrade-btn">
-              Create account for full features →
+              login
             </button>
           </div>
         )}
@@ -558,7 +526,7 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
           <div ref={messagesEndRef} className="scroll-anchor" />
         </div>
 
-          {/* Quick Actions */}
+        {/* Quick Actions */}
         <div className="quick-actions-bar">
           {quickActions[isGuest ? 'guest' : userType].map((action, index) => (
             <button
@@ -572,51 +540,47 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
           ))}
         </div>
 
-        {/* Input Area */}
-        <div className="input-area">
-          <button 
-            className="attachment-btn"
-            onClick={() => {
-              console.log('Attachment button clicked');
-              setShowFileUpload(true);
-            }}
-            disabled={isGuest}
-            title={isGuest ? "Create account to upload files" : "Upload medical document"}
-            aria-label="Attach file"
-          >
-            <Paperclip size={20} />
-          </button>
-          
-          <div className="input-wrapper">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={isGuest ? "Describe your symptoms or ask a medical question..." : "Message VitalAI about your health concerns..."}
-              disabled={isLoading}
-              aria-label="Type your message"
-            />
-            {inputText && (
-              <button 
-                className="clear-btn"
-                onClick={() => setInputText('')}
-                aria-label="Clear message"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          
-          <button 
-            onClick={sendMessage} 
-            disabled={!inputText.trim() || isLoading}
-            className="send-button"
-            aria-label="Send message"
-          >
-            <Send size={20} />
-          </button>
-        </div>
+    {/* Input Area */}
+<div className="input-area">
+  <button 
+    className="attachment-btn"
+    onClick={() => {
+      console.log('Attachment button clicked'); // Debug log
+      setShowFileUpload(true);
+    }}
+    disabled={isGuest}
+    title={isGuest ? "Create account to upload files" : "Upload medical document"}
+  >
+    <Paperclip size={20} />
+  </button>
+  
+  <div className="input-wrapper">
+    <input
+      type="text"
+      value={inputText}
+      onChange={(e) => setInputText(e.target.value)}
+      onKeyDown={handleKeyPress}
+      placeholder={isGuest ? "Describe your symptoms or ask a medical question..." : "Message VitalAI about your health concerns..."}
+      disabled={isLoading}
+    />
+    {inputText && (
+      <button 
+        className="clear-btn"
+        onClick={() => setInputText('')}
+      >
+        <X size={16} />
+      </button>
+    )}
+  </div>
+  
+  <button 
+    onClick={sendMessage} 
+    disabled={!inputText.trim() || isLoading}
+    className="send-button"
+  >
+    <Send size={20} />
+  </button>
+</div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -640,7 +604,6 @@ const ChatInterface = ({ userType = 'patient', onBackHome, onLogin }) => {
         <AppointmentScheduler 
           onSchedule={handleAppointmentSchedule}
           onClose={() => setShowAppointmentScheduler(false)}
-          isGuest={isGuest}
         />
       )}
     </div>

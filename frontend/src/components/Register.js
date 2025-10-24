@@ -1,115 +1,156 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, User, IdCard, Phone } from 'lucide-react';
-import './Login.css';
+import { Lock, Eye, EyeOff, User, IdCard, Phone, Globe, FileText } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import LanguageSelector from './LanguageSelector';
+import './Auth.css';
 
-const Register = ({ onRegister, onSwitchToLogin }) => {
+const Register = ({ onRegister, onSwitchToLogin, onBackHome }) => {
   const [formData, setFormData] = useState({
-    idNumber: '',
+    identifier: '',
+    identifierType: 'id', // id | passport | file
     firstName: '',
     lastName: '',
     phone: '',
-    email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    language: 'en',
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { register } = useAuth();
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validate ID if it's a South African ID number
+    if (formData.identifierType === 'id') {
+      const idRegex = /^[0-9]{13}$/;
+      if (!idRegex.test(formData.identifier)) {
+        setError('Please enter a valid 13-digit South African ID number');
+        return;
+      }
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
 
     setIsLoading(true);
+    setError('');
 
-    // Mock registration - replace with actual API call
-    setTimeout(() => {
-      const userData = {
-        id: 'user-' + Date.now(),
-        userType: 'patient', // Always patient for self-registration
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        idNumber: formData.idNumber,
-        name: `${formData.firstName} ${formData.lastName}`,
-        avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=667eea&color=fff`
-      };
-      onRegister(userData);
+    try {
+      const result = await register(
+        formData.identifier,
+        formData.password,
+        'patient',
+        formData
+      );
+
+      if (result.success) onSwitchToLogin();
+      else setError(result.error);
+    } catch (error) {
+      setError('An unexpected error occurred');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="logo">
-            <User size={32} />
-            <h1>VitalAI</h1>
-          </div>
-          <p>Create your patient account</p>
-        </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2 className="auth-title">Create Your Account</h2>
+        <p className="auth-subtitle">Join VitalAI for a smarter healthcare experience</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          {/* Identifier Type */}
           <div className="form-group">
-            <label htmlFor="idNumber">ID/Passport Number</label>
+            <label htmlFor="identifierType">Select ID Type</label>
+            <div className="input-wrapper">
+              <FileText size={18} className="input-icon" />
+              <select
+                id="identifierType"
+                value={formData.identifierType}
+                onChange={(e) => handleInputChange('identifierType', e.target.value)}
+                required
+              >
+                <option value="id">South African ID Number</option>
+                <option value="passport">Passport Number</option>
+                <option value="file">Hospital File Number</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Identifier */}
+          <div className="form-group">
+            <label htmlFor="identifier">
+              {formData.identifierType === 'id'
+                ? 'ID Number'
+                : formData.identifierType === 'passport'
+                ? 'Passport Number'
+                : 'File Number'}
+            </label>
             <div className="input-wrapper">
               <IdCard size={18} className="input-icon" />
               <input
-                id="idNumber"
+                id="identifier"
                 type="text"
-                value={formData.idNumber}
-                onChange={(e) => handleInputChange('idNumber', e.target.value)}
-                placeholder="Enter your ID or passport number"
+                value={formData.identifier}
+                onChange={(e) => handleInputChange('identifier', e.target.value)}
+                placeholder={`Enter your ${formData.identifierType}`}
                 required
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="firstName">First Name</label>
-              <div className="input-wrapper">
-                <User size={18} className="input-icon" />
-                <input
-                  id="firstName"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter your first name"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="lastName">Last Name</label>
-              <div className="input-wrapper">
-                <User size={18} className="input-icon" />
-                <input
-                  id="lastName"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter your last name"
-                  required
-                />
-              </div>
+          {/* First Name */}
+          <div className="form-group">
+            <label htmlFor="firstName">First Name</label>
+            <div className="input-wrapper">
+              <User size={18} className="input-icon" />
+              <input
+                id="firstName"
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                placeholder="Enter your first name"
+                required
+              />
             </div>
           </div>
 
+          {/* Last Name */}
+          <div className="form-group">
+            <label htmlFor="lastName">Last Name</label>
+            <div className="input-wrapper">
+              <User size={18} className="input-icon" />
+              <input
+                id="lastName"
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                placeholder="Enter your last name"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Phone */}
           <div className="form-group">
             <label htmlFor="phone">Phone Number</label>
             <div className="input-wrapper">
@@ -125,21 +166,7 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <div className="input-wrapper">
-              <Mail size={18} className="input-icon" />
-              <input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="Enter your email address"
-                required
-              />
-            </div>
-          </div>
-
+          {/* Password */}
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
@@ -149,19 +176,19 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 required
               />
-              <button
-                type="button"
+              <span
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              </span>
             </div>
           </div>
 
+          {/* Confirm Password */}
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password</label>
             <div className="input-wrapper">
@@ -171,36 +198,46 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                placeholder="Confirm your password"
+                placeholder="Re-enter your password"
                 required
               />
-              <button
-                type="button"
+              <span
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              </span>
             </div>
           </div>
 
-          <button 
-            type="submit" 
-            className="login-btn"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Loging in...' : 'login'}
+          {/* Language Selector */}
+          <div className="form-group">
+            <label htmlFor="language">Preferred Language</label>
+            <div className="input-wrapper">
+              <Globe size={18} className="input-icon" />
+              <LanguageSelector
+                selectedLanguage={formData.language}
+                onLanguageChange={(lang) => handleInputChange('language', lang)}
+              />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button type="submit" className="auth-btn" disabled={isLoading}>
+            {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
-        <div className="login-footer">
-          <p>
-            Already have an account?{' '}
-            <button className="switch-link" onClick={onSwitchToLogin}>
-              Sign in
-            </button>
-          </p>
-        </div>
+        <p className="auth-footer">
+          Already have an account?{' '}
+          <span className="auth-link" onClick={onSwitchToLogin}>
+            Log in
+          </span>
+        </p>
+
+        <button className="back-home" onClick={onBackHome}>
+          ← Back to Home
+        </button>
       </div>
     </div>
   );
