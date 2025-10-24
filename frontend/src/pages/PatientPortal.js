@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Calendar, FileText, MessageCircle, History, Settings, LogOut, 
   Bell, Plus, Download, Clock, MapPin, Stethoscope, AlertCircle,
-  Heart, Pill, Activity, Shield
+  Heart, Pill, Activity, X
 } from 'lucide-react';
 import ChatInterface from '../components/ChatInterface';
 import AppointmentScheduler from '../components/AppointmentScheduler';
@@ -11,8 +11,8 @@ import LanguageSelector from '../components/LanguageSelector';
 import { useAuth } from '../contexts/AuthContext';
 import './PatientPortal.css';
 
-const PatientPortal = () => {
-  const { user, logout } = useAuth();
+const PatientPortal = ({ user, onLogout, onBackHome }) => {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
@@ -28,7 +28,7 @@ const PatientPortal = () => {
     lastVisit: '2024-01-15',
     primaryDoctor: 'Dr. Sarah Smith',
     phone: '+27 12 345 6789',
-    email: 'john.doe@example.com',
+    email: user?.email || 'john.doe@example.com',
     address: '123 Main St, Johannesburg, 2000'
   };
 
@@ -70,14 +70,6 @@ const PatientPortal = () => {
       doctor: 'Dr. Mike Johnson', 
       diagnosis: 'Influenza', 
       notes: 'Prescribed antiviral medication. Rest recommended.',
-      department: 'General Practice'
-    },
-    { 
-      id: 3, 
-      date: '2023-11-05', 
-      doctor: 'Dr. Emily Brown', 
-      diagnosis: 'Annual Physical', 
-      notes: 'Good overall health. Recommended exercise routine.',
       department: 'General Practice'
     }
   ];
@@ -145,18 +137,21 @@ const PatientPortal = () => {
 
   const handleFileUpload = (file) => {
     console.log('File uploaded:', file);
-    // Here you would typically upload to your backend
     setShowFileUploadModal(false);
   };
 
   const handleAppointmentSchedule = (appointmentData) => {
     console.log('Appointment scheduled:', appointmentData);
-    // Here you would typically send to your backend
     setShowAppointmentModal(false);
   };
 
   const handleEmergencyContact = () => {
-    alert('In case of emergency, please call:\n\nEmergency Services: 911\nClinic Emergency: +27 11 123 4567');
+    alert('In case of emergency, please call:\n\nEmergency Services: 10111\nClinic Emergency: +27 11 123 4567');
+  };
+
+  const handleLogout = () => {
+    logout();
+    if (onLogout) onLogout();
   };
 
   // Auto-close sidebar on mobile when clicking a nav item
@@ -170,7 +165,15 @@ const PatientPortal = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <ChatInterface userType="patient" />;
+        return (
+          <div className="chat-tab-content">
+            <ChatInterface 
+              userType="patient" 
+              user={user}
+              onBackHome={onBackHome}
+            />
+          </div>
+        );
       
       case 'appointments':
         return (
@@ -477,7 +480,7 @@ const PatientPortal = () => {
             className="close-sidebar"
             onClick={() => setSidebarOpen(false)}
           >
-            ×
+            <X size={20} />
           </button>
         </div>
 
@@ -540,7 +543,7 @@ const PatientPortal = () => {
             <Settings size={20} />
             Settings
           </button>
-          <button className="nav-item logout" onClick={logout}>
+          <button className="nav-item logout" onClick={handleLogout}>
             <LogOut size={20} />
             Logout
           </button>

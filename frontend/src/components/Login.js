@@ -1,4 +1,4 @@
-// frontend/src/components/Login.js - UPDATED
+// frontend/src/components/Login.js - FIXED
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, Stethoscope, MessageCircle, IdCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,10 +45,14 @@ const Login = ({ onLogin, onSwitchToRegister, onBackHome, onChatAsGuest }) => {
       if (result.success) {
         onLogin(result.user);
       } else {
-        setError(result.error || 'Login failed');
+        // Handle error object properly
+        const errorMessage = result.error?.msg || result.error?.message || result.error || 'Login failed';
+        setError(errorMessage);
       }
     } catch (error) {
-      setError('An unexpected error occurred');
+      // Handle caught errors properly
+      const errorMessage = error?.msg || error?.message || error?.toString() || 'An unexpected error occurred';
+      setError(errorMessage);
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
@@ -87,7 +91,8 @@ const Login = ({ onLogin, onSwitchToRegister, onBackHome, onChatAsGuest }) => {
 
         {error && (
           <div className="error-message">
-            {error}
+            {/* Safe rendering - only strings */}
+            {typeof error === 'string' ? error : JSON.stringify(error)}
           </div>
         )}
 

@@ -1,4 +1,4 @@
-// App.js - COMPLETE UPDATED VERSION WITH FIXES
+// App.js - UPDATED WITH CHATINTERFACE AS LANDING PAGE
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Home from './pages/Home';
@@ -13,10 +13,10 @@ import './App.css';
 
 // Main App Content Component
 const AppContent = () => {
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState('chat'); // CHANGED: Default to 'chat' instead of 'home'
   const { user, logout, loading } = useAuth();
 
-  // Backend connection test - MOVED INSIDE THE COMPONENT
+  // Backend connection test
   useEffect(() => {
     const testBackendConnection = async () => {
       try {
@@ -72,9 +72,9 @@ const AppContent = () => {
       } else if (user.userType === 'admin') {
         setCurrentView('admin-dashboard');
       }
-    } else if (!loading && !user && currentView !== 'home' && currentView !== 'login' && currentView !== 'register' && currentView !== 'chat') {
-      // User is not logged in and not on public pages, redirect to home
-      setCurrentView('home');
+    } else if (!loading && !user && currentView !== 'chat' && currentView !== 'login' && currentView !== 'register' && currentView !== 'home') {
+      // User is not logged in and not on public pages, redirect to chat (new landing page)
+      setCurrentView('chat');
     }
   }, [user, loading, currentView]);
 
@@ -100,7 +100,7 @@ const AppContent = () => {
 
   const handleLogout = () => {
     logout();
-    setCurrentView('home');
+    setCurrentView('chat'); // CHANGED: Redirect to chat after logout
   };
 
   const handleChatAsGuest = () => {
@@ -139,7 +139,7 @@ const AppContent = () => {
           <Login
             onLogin={handleLogin}
             onSwitchToRegister={() => setCurrentView('register')}
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('chat')} // CHANGED: Back to chat instead of home
             onChatAsGuest={handleChatAsGuest}
           />
         );
@@ -149,7 +149,7 @@ const AppContent = () => {
           <Register
             onRegister={handleRegister}
             onSwitchToLogin={() => setCurrentView('login')}
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('chat')} // CHANGED: Back to chat instead of home
             onChatAsGuest={handleChatAsGuest}
           />
         );
@@ -157,18 +157,19 @@ const AppContent = () => {
       case 'kiosk':
         return (
           <Kiosk 
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('chat')} // CHANGED: Back to chat instead of home
             onLogin={() => setCurrentView('login')}
           />
         );
       
-      case 'chat':
+      case 'chat': // CHANGED: This is now the main landing page
         return (
           <ChatInterface 
             userType={user?.userType || 'guest'} 
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('home')} // Keep option to go to original home if needed
             onLogin={() => setCurrentView('login')}
             user={user}
+            isLandingPage={true} // Add this prop to customize behavior
           />
         );
       
@@ -177,10 +178,10 @@ const AppContent = () => {
           <PatientPortal 
             user={user} 
             onLogout={handleLogout}
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('chat')} // CHANGED: Back to chat instead of home
           />
         ) : (
-          <Home />
+          <ChatInterface /> // CHANGED: Redirect to chat if not authenticated
         );
       
       case 'staff-dashboard':
@@ -188,10 +189,10 @@ const AppContent = () => {
           <StaffDashboard 
             user={user} 
             onLogout={handleLogout}
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('chat')} // CHANGED: Back to chat instead of home
           />
         ) : (
-          <Home />
+          <ChatInterface /> // CHANGED: Redirect to chat if not authenticated
         );
       
       case 'admin-dashboard':
@@ -199,14 +200,14 @@ const AppContent = () => {
           <AdminDashboard 
             user={user} 
             onLogout={handleLogout}
-            onBackHome={() => setCurrentView('home')}
+            onBackHome={() => setCurrentView('chat')} // CHANGED: Back to chat instead of home
           />
         ) : (
-          <Home />
+          <ChatInterface /> // CHANGED: Redirect to chat if not authenticated
         );
       
       default:
-        return <Home />;
+        return <ChatInterface />; // CHANGED: Default to chat interface
     }
   };
 

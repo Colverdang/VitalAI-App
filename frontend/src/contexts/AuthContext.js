@@ -1,6 +1,5 @@
-// frontend/src/contexts/AuthContext.js - IMPROVED ERROR HANDLING
+// frontend/src/contexts/AuthContext.js - COMPLETE MOCK VERSION
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -16,100 +15,122 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check if user is logged in on app start
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
     const token = localStorage.getItem('access_token');
-    if (token) {
+    const savedUser = localStorage.getItem('user');
+    
+    if (token && savedUser) {
       try {
-        const response = await authAPI.getProfile();
-        setUser(response.data);
+        setUser(JSON.parse(savedUser));
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('Failed to parse saved user:', error);
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
       }
     }
     setLoading(false);
-  };
+  }, []);
 
   const login = async (identifier, password) => {
     try {
-      console.log('Attempting login with:', { identifier });
+      console.log('🔑 MOCK LOGIN - No API call, using mock data');
+      console.log('Identifier:', identifier);
       
-      const response = await authAPI.login(identifier, password);
-      const { access_token, user: userData } = response.data;
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      localStorage.setItem('access_token', access_token);
-      
-      // Format user data for frontend
-      const frontendUser = {
-        ...userData,
-        userType: userData.role === 'admin' ? 'admin' : 
-                  userData.role === 'staff' ? 'staff' : 'patient',
-        name: userData.first_name ? `${userData.first_name} ${userData.last_name}` : userData.identifier,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.first_name || userData.identifier)}&background=667eea&color=fff`
+      // Create mock user data
+      const mockUser = {
+        id: 1,
+        identifier: identifier,
+        email: `${identifier}@example.com`,
+        userType: 'patient',
+        firstName: 'Test',
+        lastName: 'User', 
+        name: 'Test User',
+        avatar: `https://ui-avatars.com/api/?name=Test+User&background=667eea&color=fff`
       };
       
-      setUser(frontendUser);
-      localStorage.setItem('user', JSON.stringify(frontendUser));
+      const mockToken = `mock_jwt_${identifier}_${Date.now()}`;
       
-      return { success: true, user: frontendUser };
+      // Save to localStorage
+      localStorage.setItem('access_token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(mockUser);
+      
+      console.log('✅ MOCK LOGIN SUCCESSFUL:', mockUser);
+      return { success: true, user: mockUser };
+
     } catch (error) {
-      console.error('Login error details:', error);
-      
-      // Better error message extraction
-      let errorMessage = 'Login failed. Please check your credentials.';
-      
-      if (error.response) {
-        // Server responded with error status
-        errorMessage = error.response.data?.detail || error.response.data?.message || errorMessage;
-      } else if (error.request) {
-        // Request was made but no response received
-        errorMessage = 'Cannot connect to server. Please check if the backend is running.';
-      } else {
-        // Something else happened
-        errorMessage = error.message || errorMessage;
-      }
-      
+      console.error('❌ Mock login error:', error);
       return { 
         success: false, 
-        error: errorMessage
+        error: 'Login failed. Please try again.' 
       };
     }
   };
 
   const register = async (identifier, password, role = 'patient', userData = {}) => {
     try {
-      console.log('Attempting registration with:', { identifier, ...userData });
+      console.log('👤 MOCK REGISTRATION - No API call');
+      console.log('Registration data:', { identifier, ...userData });
       
-      const registrationData = {
-        identifier,
-        password,
-        role,
-        ...userData
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Validate ID if it's a South African ID number
+      if (userData.identifierType === 'id') {
+        const idRegex = /^[0-9]{13}$/;
+        if (!idRegex.test(identifier)) {
+          return { 
+            success: false, 
+            error: 'Please enter a valid 13-digit South African ID number' 
+          };
+        }
+      }
+
+      // Validate password
+      if (password.length < 6) {
+        return { 
+          success: false, 
+          error: 'Password must be at least 6 characters long' 
+        };
+      }
+
+      // Create mock user
+      const mockUser = {
+        id: Date.now(),
+        identifier: identifier,
+        email: `${identifier}@example.com`,
+        userType: 'patient',
+        firstName: userData.firstName || 'New',
+        lastName: userData.lastName || 'User',
+        name: `${userData.firstName || 'New'} ${userData.lastName || 'User'}`,
+        phone: userData.phone || '',
+        language: userData.language || 'en',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.firstName || 'New')}+${encodeURIComponent(userData.lastName || 'User')}&background=667eea&color=fff`
       };
       
-      const response = await authAPI.register(registrationData);
-      return { success: true, data: response.data };
+      const mockToken = `mock_jwt_${identifier}_${Date.now()}`;
+      
+      // Save to localStorage and set user
+      localStorage.setItem('access_token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(mockUser);
+      
+      console.log('✅ MOCK REGISTRATION SUCCESSFUL:', mockUser);
+      return { 
+        success: true, 
+        user: mockUser,
+        message: 'Registration successful!'
+      };
+
     } catch (error) {
-      console.error('Registration error details:', error);
-      
-      let errorMessage = 'Registration failed. Please try again.';
-      
-      if (error.response) {
-        errorMessage = error.response.data?.detail || error.response.data?.message || errorMessage;
-      } else if (error.request) {
-        errorMessage = 'Cannot connect to server. Please check if the backend is running.';
-      } else {
-        errorMessage = error.message || errorMessage;
-      }
-      
+      console.error('❌ Mock registration error:', error);
       return { 
         success: false, 
-        error: errorMessage
+        error: 'Registration failed. Please try again.' 
       };
     }
   };
@@ -118,6 +139,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     setUser(null);
+    console.log('✅ User logged out');
   };
 
   const value = {
