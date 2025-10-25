@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/PatientPortal.js - WITHOUT TOP BAR
+import React, { useState, useEffect } from 'react'; 
 import { 
-  User, Calendar, FileText, MessageCircle, History, Settings, LogOut, 
   Bell, Plus, Download, Clock, MapPin, Stethoscope, AlertCircle,
-  Heart, Pill, Activity, X
+  Heart, Pill, Activity, User, Calendar, FileText, MessageCircle, 
+  History, Settings, LogOut, X
 } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 import ChatInterface from '../components/ChatInterface';
 import AppointmentScheduler from '../components/AppointmentScheduler';
 import FileUpload from '../components/FileUpload';
-import LanguageSelector from '../components/LanguageSelector';
 import { useAuth } from '../contexts/AuthContext';
 import './PatientPortal.css';
 
@@ -18,6 +19,8 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [appointmentToReschedule, setAppointmentToReschedule] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   // Mock patient data
   const patientInfo = {
@@ -32,7 +35,7 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
     address: '123 Main St, Johannesburg, 2000'
   };
 
-  const upcomingAppointments = [
+  const [upcomingAppointments, setUpcomingAppointments] = useState([
     { 
       id: 1, 
       doctor: 'Dr. Sarah Smith', 
@@ -53,7 +56,7 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
       type: 'Consultation',
       location: 'Room 105'
     }
-  ];
+  ]);
 
   const medicalHistory = [
     { 
@@ -106,7 +109,7 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
 
   const quickActions = [
     { 
-      icon: MessageCircle, 
+      icon: Stethoscope, 
       label: 'Chat with VitalAI', 
       description: 'Get instant medical assistance',
       action: () => setActiveTab('chat'),
@@ -127,7 +130,7 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
       color: '#F59E0B'
     },
     { 
-      icon: History, 
+      icon: Activity, 
       label: 'View History', 
       description: 'Check medical history',
       action: () => setActiveTab('medical-history'),
@@ -135,13 +138,67 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
     }
   ];
 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
+  };
+
+  const handleReschedule = (appointment) => {
+    setAppointmentToReschedule(appointment);
+    setShowAppointmentModal(true);
+  };
+
+  const handleCancel = (appointmentId) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      setUpcomingAppointments(prev => 
+        prev.map(apt => 
+          apt.id === appointmentId 
+            ? { ...apt, status: 'cancelled' }
+            : apt
+        )
+      );
+      showToast('Appointment cancelled successfully');
+    }
+  };
+
   const handleFileUpload = (file) => {
     console.log('File uploaded:', file);
     setShowFileUploadModal(false);
+    showToast('File uploaded successfully');
   };
 
   const handleAppointmentSchedule = (appointmentData) => {
-    console.log('Appointment scheduled:', appointmentData);
+    if (appointmentToReschedule) {
+      setUpcomingAppointments(prev => 
+        prev.map(apt => 
+          apt.id === appointmentToReschedule.id 
+            ? { 
+                ...apt, 
+                date: appointmentData.date,
+                time: appointmentData.time,
+                status: 'rescheduled',
+                location: appointmentData.location || apt.location
+              }
+            : apt
+        )
+      );
+      setAppointmentToReschedule(null);
+      showToast('Appointment rescheduled successfully');
+    } else {
+      const newAppointment = {
+        id: Date.now(),
+        doctor: appointmentData.doctor || 'Dr. Sarah Smith',
+        department: appointmentData.department || 'General Practice',
+        date: appointmentData.date,
+        time: appointmentData.time,
+        status: 'confirmed',
+        type: appointmentData.type || 'Consultation',
+        location: appointmentData.location || 'Room 101'
+      };
+      setUpcomingAppointments(prev => [...prev, newAppointment]);
+      showToast('Appointment booked successfully');
+    }
+    
     setShowAppointmentModal(false);
   };
 
@@ -161,6 +218,9 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
     }
   }, [activeTab]);
 
+  // Filter out cancelled appointments from dashboard view
+  const activeAppointments = upcomingAppointments.filter(apt => apt.status !== 'cancelled');
+
   // Render different content based on active tab
   const renderContent = () => {
     switch (activeTab) {
@@ -170,7 +230,14 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
             <ChatInterface 
               userType="patient" 
               user={user}
-              onBackHome={onBackHome}
+              onBackHome={(tab) => {
+                if (tab && tab !== 'chat') {
+                  setActiveTab(tab);
+                } else {
+                  setActiveTab('dashboard');
+                }
+              }}
+              onLogout={handleLogout}
             />
           </div>
         );
@@ -182,7 +249,10 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
               <h2>My Appointments</h2>
               <button 
                 className="btn-primary"
-                onClick={() => setShowAppointmentModal(true)}
+                onClick={() => {
+                  setAppointmentToReschedule(null);
+                  setShowAppointmentModal(true);
+                }}
               >
                 <Plus size={16} />
                 Book New Appointment
@@ -216,8 +286,25 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
                     <p className="appointment-type">Type: {appointment.type}</p>
                   </div>
                   <div className="appointment-actions">
-                    <button className="btn-secondary">Reschedule</button>
-                    <button className="btn-text">Cancel</button>
+                    {appointment.status !== 'cancelled' && (
+                      <>
+                        <button 
+                          className="btn-secondary"
+                          onClick={() => handleReschedule(appointment)}
+                        >
+                          Reschedule
+                        </button>
+                        <button 
+                          className="btn-text"
+                          onClick={() => handleCancel(appointment.id)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                    {appointment.status === 'cancelled' && (
+                      <span className="cancelled-text">This appointment has been cancelled</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -339,7 +426,7 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
                   </button>
                 </div>
                 <div className="appointments-list">
-                  {upcomingAppointments.slice(0, 2).map(appointment => (
+                  {activeAppointments.slice(0, 2).map(appointment => (
                     <div key={appointment.id} className="appointment-item">
                       <div className="appointment-info">
                         <h4>{appointment.doctor}</h4>
@@ -354,6 +441,9 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
                       </span>
                     </div>
                   ))}
+                  {activeAppointments.length === 0 && (
+                    <p className="no-appointments">No upcoming appointments</p>
+                  )}
                 </div>
               </div>
 
@@ -469,143 +559,44 @@ const PatientPortal = ({ user, onLogout, onBackHome }) => {
 
   return (
     <div className="patient-portal">
-      {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo">
-            <Stethoscope size={24} />
-            <span>VitalAI Patient</span>
-          </div>
-          <button 
-            className="close-sidebar"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X size={20} />
-          </button>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`toast toast-${toast.type}`}>
+          {toast.message}
         </div>
+      )}
 
-        <div className="patient-profile">
-          <div className="patient-avatar">
-            <User size={32} />
-          </div>
-          <div className="patient-info">
-            <h3>{patientInfo.name}</h3>
-            <p>Patient ID: {patientInfo.id}</p>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button 
-            className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <User size={20} />
-            Dashboard
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'appointments' ? 'active' : ''}`}
-            onClick={() => setActiveTab('appointments')}
-          >
-            <Calendar size={20} />
-            Appointments
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'medical-history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('medical-history')}
-          >
-            <History size={20} />
-            Medical History
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'prescriptions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('prescriptions')}
-          >
-            <Pill size={20} />
-            Prescriptions
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setActiveTab('chat')}
-          >
-            <MessageCircle size={20} />
-            Chat with VitalAI
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="language-section">
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onLanguageChange={setSelectedLanguage}
-            />
-          </div>
-          <button className="nav-item">
-            <Settings size={20} />
-            Settings
-          </button>
-          <button className="nav-item logout" onClick={handleLogout}>
-            <LogOut size={20} />
-            Logout
-          </button>
-        </div>
-      </div>
+      {/* Reusable Sidebar Component */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        user={user}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onLogout={handleLogout}
+        onBackHome={onBackHome}
+        userType="patient"
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={setSelectedLanguage}
+      />
 
       {/* Main Content */}
       <div className="main-content">
-        {/* Top Bar */}
-        <div className="top-bar">
-          <div className="top-bar-left">
-            <button 
-              className="menu-btn"
-              onClick={() => setSidebarOpen(true)}
-            >
-              ☰
-            </button>
-            <h1>
-              {activeTab === 'dashboard' && 'Patient Dashboard'}
-              {activeTab === 'appointments' && 'My Appointments'}
-              {activeTab === 'medical-history' && 'Medical History'}
-              {activeTab === 'prescriptions' && 'Prescriptions'}
-              {activeTab === 'chat' && 'Chat with VitalAI'}
-            </h1>
-          </div>
-
-          <div className="top-bar-right">
-            <button className="notification-btn">
-              <Bell size={20} />
-              <span className="notification-badge">2</span>
-            </button>
-            <div className="user-profile">
-              <div className="user-avatar">
-                <User size={20} />
-              </div>
-              <div className="user-info">
-                <span className="user-name">{patientInfo.name}</span>
-                <span className="user-role">Patient</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Page Content */}
         <div className="page-content">
           {renderContent()}
         </div>
       </div>
 
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div 
-          className="sidebar-overlay"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-
       {/* Modals */}
       {showAppointmentModal && (
         <AppointmentScheduler
           onSchedule={handleAppointmentSchedule}
-          onClose={() => setShowAppointmentModal(false)}
+          onClose={() => {
+            setShowAppointmentModal(false);
+            setAppointmentToReschedule(null);
+          }}
+          existingAppointment={appointmentToReschedule}
         />
       )}
 

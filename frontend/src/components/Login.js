@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, Stethoscope, MessageCircle, IdCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import './Auth.css';
+import './Login.css';
 
 const Login = ({ onLogin, onSwitchToRegister, onBackHome, onChatAsGuest }) => {
   const [formData, setFormData] = useState({

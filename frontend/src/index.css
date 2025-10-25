@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* Add this to prevent horizontal scroll */
 }
 
 code {
@@ -14,4 +15,15 @@ code {
 
 * {
   box-sizing: border-box;
+}
+
+/* Add these to ensure proper root element sizing */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
 }

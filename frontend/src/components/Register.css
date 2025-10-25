@@ -1,0 +1,356 @@
+/* frontend/src/components/Register.css */
+.register-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+}
+
+.register-card {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  margin: 1rem;
+  max-height: 95vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.register-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.register-subtitle {
+  text-align: center;
+  margin: 0 0 1.5rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Error Message */
+.auth-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+  font-size: 0.75rem;
+}
+
+/* Form Styles - COMPACT */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.input-wrapper:focus-within {
+  background: white;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: #6b7280;
+  z-index: 1;
+  pointer-events: none; /* Prevent icon from blocking input */
+}
+
+.input-wrapper input,
+.input-wrapper select {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 2.5rem; /* Equal padding on both sides for icons */
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  outline: none;
+  color: #374151;
+}
+
+/* For password fields, add extra padding on the right for the toggle */
+.input-wrapper input[type="password"],
+.input-wrapper input[type="text"] {
+  padding-right: 3rem; /* Extra space for password toggle */
+}
+
+.input-wrapper input::placeholder {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.875rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.register-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  margin-top: 0.5rem;
+}
+
+.register-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.register-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e1e5e9;
+  font-size: 0.75rem;
+}
+
+.register-footer p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.auth-link:hover {
+  color: #5a6fd8;
+  background: #f0f4ff;
+}
+
+.back-home {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.back-home:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+/* ===== SIDE BY SIDE LAYOUT FOR LARGER SCREENS ===== */
+
+/* Larger card for desktop */
+@media (min-width: 768px) {
+  .register-card {
+    max-width: 600px;
+    padding: 2.5rem;
+  }
+}
+
+/* Side by side form layout - ONLY on large screens */
+@media (min-width: 1024px) {
+  .register-card {
+    max-width: 800px;
+    max-height: none;
+    overflow-y: visible;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 0;
+  }
+  
+  /* Full width fields */
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Mobile adjustments - IMPROVED */
+@media (max-width: 480px) {
+  .register-container {
+    padding: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .register-card {
+    padding: 1.5rem;
+    margin: 0.5rem;
+    max-height: 90vh;
+  }
+  
+  .register-title {
+    font-size: 1.25rem;
+  }
+  
+  .register-subtitle {
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .register-form {
+    gap: 0.5rem;
+  }
+  
+  .form-group {
+    gap: 0.3rem;
+  }
+  
+  .input-wrapper {
+    min-height: 42px;
+  }
+  
+  .input-wrapper input,
+  .input-wrapper select {
+    padding: 0.7rem 2.25rem 0.7rem 2.25rem;
+    font-size: 0.8rem;
+  }
+  
+  .input-wrapper input[type="password"],
+  .input-wrapper input[type="text"] {
+    padding-right: 2.75rem;
+  }
+  
+  .input-icon {
+    left: 0.75rem;
+  }
+  
+  .password-toggle {
+    right: 0.75rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .register-card {
+    padding: 1.25rem;
+    margin: 0.25rem;
+  }
+  
+  .register-form {
+    gap: 0.4rem;
+  }
+  
+  .input-wrapper {
+    min-height: 40px;
+  }
+  
+  .input-wrapper input,
+  .input-wrapper select {
+    padding: 0.6rem 2rem 0.6rem 2rem;
+    font-size: 0.75rem;
+  }
+  
+  .input-wrapper input[type="password"],
+  .input-wrapper input[type="text"] {
+    padding-right: 2.5rem;
+  }
+  
+  .input-icon {
+    left: 0.6rem;
+  }
+  
+  .password-toggle {
+    right: 0.6rem;
+  }
+}
+
+/* Prevent horizontal scrolling on mobile */
+@media (max-width: 1023px) {
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
