@@ -7,24 +7,38 @@ import {
   Modal,
   TextInput,
   FlatList,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles/Appointments';
 
-const Appointments = () => {
+const { width, height } = Dimensions.get('window');
+
+const Appointments = ({ user }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [patientData, setPatientData] = useState({
-    name: '',
-    age: '',
-    contact: '',
-  });
   const [appointmentData, setAppointmentData] = useState({
     department: '',
-    date: '',
-    time: '',
+    location: '',
+    doctorType: '',
+    preferredDate: '',
+    preferredTime: '',
     reason: '',
+    urgency: '',
   });
+
+  const hospitals = [
+    "Johannesburg General Hospital",
+    "Pretoria Academic Hospital", 
+    "Cape Town Medical Center",
+    "Durban Regional Hospital",
+    "Port Elizabeth City Hospital",
+    "Bloemfontein National Hospital",
+    "East London Medical Complex"
+  ];
 
   const departments = [
     "Emergency", "General Medicine", "Pediatrics", "Surgery", 
@@ -32,9 +46,24 @@ const Appointments = () => {
     "Gastroenterology", "Respiratory", "Maternity", "Pharmacy"
   ];
 
+  const doctorTypes = [
+    "General Practitioner",
+    "Specialist Consultant", 
+    "Senior Specialist",
+    "Professor",
+    "Any Available Doctor"
+  ];
+
   const timeSlots = [
     '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
     '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
+  ];
+
+  const urgencyLevels = [
+    { label: "Routine Check-up", value: "routine", color: "#34C759" },
+    { label: "Follow-up Visit", value: "followup", color: "#FF9500" },
+    { label: "Urgent Care", value: "urgent", color: "#FF3B30" },
+    { label: "Emergency", value: "emergency", color: "#FF2D55" }
   ];
 
   const upcomingAppointments = [
@@ -42,6 +71,7 @@ const Appointments = () => {
       id: '1',
       department: 'General Medicine',
       doctor: 'Dr. Sarah Johnson',
+      location: 'Johannesburg General Hospital',
       date: '2024-01-15',
       time: '10:00 AM',
       status: 'Confirmed',
@@ -50,6 +80,7 @@ const Appointments = () => {
       id: '2',
       department: 'Cardiology',
       doctor: 'Dr. Michael Chen',
+      location: 'Pretoria Academic Hospital',
       date: '2024-01-20',
       time: '02:30 PM',
       status: 'Pending',
@@ -61,26 +92,98 @@ const Appointments = () => {
       id: '3',
       department: 'Dermatology',
       doctor: 'Dr. Emily Davis',
+      location: 'Cape Town Medical Center',
       date: '2024-01-05',
       time: '11:00 AM',
       status: 'Completed',
     },
   ];
 
+  const handleEmergencyCall = () => {
+    Alert.alert(
+      'Emergency Call',
+      'This will call emergency services (10111). Continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Call',
+          style: 'destructive',
+          onPress: () => Linking.openURL('tel:10111'),
+        },
+      ]
+    );
+  };
+
+  const handleCancelAppointment = (appointmentId) => {
+    Alert.alert(
+      'Cancel Appointment',
+      'Are you sure you want to cancel this appointment?',
+      [
+        {
+          text: 'No, Keep It',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Cancelled', 'Your appointment has been cancelled');
+            // In a real app, you would update your appointments array here
+          },
+        },
+      ]
+    );
+  };
+
   const handleBookAppointment = () => {
-    // Handle appointment booking logic
+    if (!user) {
+      Alert.alert(
+        'Login Required',
+        'Please login to book an appointment',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: onLoginRequired }
+        ]
+      );
+      return;
+    }
+
+    // Validate required fields
+    if (!appointmentData.department || !appointmentData.location) {
+      Alert.alert('Error', 'Please select a department and hospital location');
+      return;
+    }
+
     const newAppointment = {
       id: Date.now().toString(),
+      patientName: user.fullName,
+      patientId: user.idNumber,
       department: appointmentData.department,
-      doctor: 'Dr. To be assigned',
-      date: appointmentData.date,
-      time: appointmentData.time,
+      location: appointmentData.location,
+      doctorType: appointmentData.doctorType || 'Any Available Doctor',
+      date: appointmentData.preferredDate || 'ASAP',
+      time: appointmentData.preferredTime || '09:00 AM',
+      reason: appointmentData.reason || 'General consultation',
+      urgency: appointmentData.urgency || 'routine',
       status: 'Pending',
     };
     
     setShowBookingModal(false);
     setCurrentStep(0);
-    // Here you would typically update state or send to backend
+    setAppointmentData({
+      department: '',
+      location: '',
+      doctorType: '',
+      preferredDate: '',
+      preferredTime: '',
+      reason: '',
+      urgency: '',
+    });
+    
+    Alert.alert('Success', 'Appointment booked successfully!');
   };
 
   const renderAppointmentItem = ({ item }) => (
@@ -97,32 +200,65 @@ const Appointments = () => {
         </View>
       </View>
       <Text style={styles.doctor}>👨‍⚕️ {item.doctor}</Text>
+      <Text style={styles.location}>🏥 {item.location}</Text>
       <View style={styles.appointmentDetails}>
-        <Text style={styles.detail}>
-
-📅 {item.date}</Text>
+        <Text style={styles.detail}>📅 {item.date}</Text>
         <Text style={styles.detail}>⏰ {item.time}</Text>
       </View>
       {item.status === 'Pending' && (
-        <TouchableOpacity style={styles.cancelButton}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+        <TouchableOpacity 
+          style={styles.cancelButton}
+          onPress={() => handleCancelAppointment(item.id)}
+        >
+          <Text style={styles.cancelButtonText}>Cancel Appointment</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 
+const PatientInfoSection = () => (
+  <View>
+    <Text style={styles.sectionTitle}>Patient Information</Text>
+    <View style={styles.patientInfo}>
+      <Text style={styles.patientDetail}><Text style={styles.bold}>Name:</Text> {user.fullName}</Text>
+      <Text style={styles.patientDetail}><Text style={styles.bold}>ID:</Text> {user.idNumber}</Text>
+      <Text style={styles.patientDetail}><Text style={styles.bold}>Phone:</Text> {user.phone}</Text>
+      <Text style={styles.patientDetail}><Text style={styles.bold}>Email:</Text> {user.email}</Text>
+      <Text style={styles.patientDetail}><Text style={styles.bold}>Date of Birth:</Text> {user.dateOfBirth}</Text>
+    </View>
+  </View>
+);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>My Appointments</Text>
-        <TouchableOpacity 
-          style={styles.bookButton}
-          onPress={() => setShowBookingModal(true)}
-        >
-          <Ionicons name="add" size={20} color="#FFF" />
-          <Text style={styles.bookButtonText}>Book New</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={[styles.bookButton, !user && styles.disabledButton]}
+            onPress={() => setShowBookingModal(true)}
+            disabled={!user}
+          >
+            <Ionicons name="add" size={20} color="#FFF" />
+            <Text style={styles.bookButtonText}>Book New</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.emergencyButton}
+            onPress={handleEmergencyCall}
+          >
+            <Ionicons name="warning" size={20} color="#FFF" />
+            <Text style={styles.emergencyButtonText}>Emergency</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {!user && (
+        <View style={styles.loginPrompt}>
+          <Ionicons name="log-in" size={32} color="#007AFF" />
+          <Text style={styles.loginPromptText}>Please login to book appointments</Text>
+        </View>
+      )}
 
       <ScrollView style={styles.content}>
         <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
@@ -156,113 +292,258 @@ const Appointments = () => {
         )}
       </ScrollView>
 
-      {/* Booking Modal */}
+      {/* Enhanced Booking Modal */}
       <Modal visible={showBookingModal} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Book Appointment</Text>
-            
-            {currentStep === 0 && (
-              <View>
-                <Text style={styles.modalText}>Your Information</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  value={patientData.name}
-                  onChangeText={(text) => setPatientData(prev => ({...prev, name: text}))}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Age"
-                  keyboardType="numeric"
-                  value={patientData.age}
-                  onChangeText={(text) => setPatientData(prev => ({...prev, age: text}))}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Contact Number"
-                  keyboardType="phone-pad"
-                  value={patientData.contact}
-                  onChangeText={(text) => setPatientData(prev => ({...prev, contact: text}))}
-                />
-                <TouchableOpacity 
-                  style={styles.primaryButton}
-                  onPress={() => setCurrentStep(1)}
-                >
-                  <Text style={styles.primaryButtonText}>Continue</Text>
-                </TouchableOpacity>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Book Appointment</Text>
+              <TouchableOpacity onPress={() => setShowBookingModal(false)}>
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              
+              {/* Patient Information Section */}
+              {user && (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Ionicons name="person" size={20} color="#007AFF" />
+                    <Text style={styles.sectionTitle}>Patient Information</Text>
+                  </View>
+                  <View style={styles.patientInfoGrid}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Name:</Text>
+                      <Text style={styles.infoValue}>{user.fullName}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>ID:</Text>
+                      <Text style={styles.infoValue}>{user.idNumber || 'Not provided'}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Phone:</Text>
+                      <Text style={styles.infoValue}>{user.phone}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Email:</Text>
+                      <Text style={styles.infoValue}>{user.email}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Date of Birth:</Text>
+                      <Text style={styles.infoValue}>{user.dateOfBirth || 'Not provided'}</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Appointment Details Section */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="calendar" size={20} color="#007AFF" />
+                  <Text style={styles.sectionTitle}>Appointment Details</Text>
+                </View>
+
+                {/* Hospital Selection */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Select Hospital</Text>
+                  <ScrollView style={styles.optionsContainer} nestedScrollEnabled>
+                    {hospitals.map(hospital => (
+                      <TouchableOpacity 
+                        key={hospital}
+                        style={[
+                          styles.optionCard,
+                          appointmentData.location === hospital && styles.optionCardSelected
+                        ]}
+                        onPress={() => setAppointmentData(prev => ({...prev, location: hospital}))}
+                      >
+                        <View style={styles.optionContent}>
+                          <Ionicons 
+                            name="business" 
+                            size={20} 
+                            color={appointmentData.location === hospital ? '#007AFF' : '#666'} 
+                          />
+                          <Text style={[
+                            styles.optionText,
+                            appointmentData.location === hospital && styles.optionTextSelected
+                          ]}>
+                            {hospital}
+                          </Text>
+                        </View>
+                        {appointmentData.location === hospital && (
+                          <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Department Selection */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Select Department</Text>
+                  <ScrollView style={styles.optionsContainer} nestedScrollEnabled>
+                    {departments.map(dept => (
+                      <TouchableOpacity 
+                        key={dept}
+                        style={[
+                          styles.optionCard,
+                          appointmentData.department === dept && styles.optionCardSelected
+                        ]}
+                        onPress={() => setAppointmentData(prev => ({...prev, department: dept}))}
+                      >
+                        <View style={styles.optionContent}>
+                          <Ionicons 
+                            name="medical" 
+                            size={20} 
+                            color={appointmentData.department === dept ? '#007AFF' : '#666'} 
+                          />
+                          <Text style={[
+                            styles.optionText,
+                            appointmentData.department === dept && styles.optionTextSelected
+                          ]}>
+                            {dept}
+                          </Text>
+                        </View>
+                        {appointmentData.department === dept && (
+                          <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Doctor Type Selection */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Preferred Doctor Type</Text>
+                  <ScrollView style={styles.optionsContainer} nestedScrollEnabled>
+                    {doctorTypes.map(type => (
+                      <TouchableOpacity 
+                        key={type}
+                        style={[
+                          styles.optionCard,
+                          appointmentData.doctorType === type && styles.optionCardSelected
+                        ]}
+                        onPress={() => setAppointmentData(prev => ({...prev, doctorType: type}))}
+                      >
+                        <View style={styles.optionContent}>
+                          <Ionicons 
+                            name="person" 
+                            size={20} 
+                            color={appointmentData.doctorType === type ? '#007AFF' : '#666'} 
+                          />
+                          <Text style={[
+                            styles.optionText,
+                            appointmentData.doctorType === type && styles.optionTextSelected
+                          ]}>
+                            {type}
+                          </Text>
+                        </View>
+                        {appointmentData.doctorType === type && (
+                          <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Urgency Level */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Urgency Level</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.urgencyContainer}>
+                    {urgencyLevels.map(level => (
+                      <TouchableOpacity
+                        key={level.value}
+                        style={[
+                          styles.urgencyOption,
+                          { backgroundColor: level.color + '20', borderColor: level.color },
+                          appointmentData.urgency === level.value && styles.urgencyOptionSelected
+                        ]}
+                        onPress={() => setAppointmentData(prev => ({...prev, urgency: level.value}))}
+                      >
+                        <Ionicons 
+                          name={level.value === 'emergency' ? 'warning' : 'time'} 
+                          size={16} 
+                          color={level.color} 
+                        />
+                        <Text style={[
+                          styles.urgencyText,
+                          { color: level.color },
+                          appointmentData.urgency === level.value && styles.urgencyTextSelected
+                        ]}>
+                          {level.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Date and Time */}
+                <View style={styles.row}>
+                  <View style={styles.inputGroupHalf}>
+                    <Text style={styles.inputLabel}>Preferred Date</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="YYYY-MM-DD"
+                      value={appointmentData.preferredDate}
+                      onChangeText={(text) => setAppointmentData(prev => ({...prev, preferredDate: text}))}
+                    />
+                  </View>
+                  <View style={styles.inputGroupHalf}>
+                    <Text style={styles.inputLabel}>Preferred Time</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeContainer}>
+                      {timeSlots.map(slot => (
+                        <TouchableOpacity
+                          key={slot}
+                          style={[
+                            styles.timeOption,
+                            appointmentData.preferredTime === slot && styles.timeOptionSelected
+                          ]}
+                          onPress={() => setAppointmentData(prev => ({...prev, preferredTime: slot}))}
+                        >
+                          <Text style={[
+                            styles.timeText,
+                            appointmentData.preferredTime === slot && styles.timeTextSelected
+                          ]}>
+                            {slot}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </View>
+
+                {/* Reason for Visit */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Reason for Visit</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Please describe your symptoms or reason for visit..."
+                    multiline
+                    numberOfLines={3}
+                    value={appointmentData.reason}
+                    onChangeText={(text) => setAppointmentData(prev => ({...prev, reason: text}))}
+                  />
+                </View>
               </View>
-            )}
-            
-            {currentStep === 1 && (
-              <View>
-                <Text style={styles.modalText}>Appointment Details</Text>
-                <Text style={styles.label}>Select Department:</Text>
-                <ScrollView style={styles.departmentList}>
-                  {departments.map(dept => (
-                    <TouchableOpacity 
-                      key={dept}
-                      style={[
-                        styles.optionButton,
-                        appointmentData.department === dept && styles.optionButtonSelected
-                      ]}
-                      onPress={() => setAppointmentData(prev => ({...prev, department: dept}))}
-                    >
-                      <Text style={[
-                        styles.optionButtonText,
-                        appointmentData.department === dept && styles.optionButtonTextSelected
-                      ]}>
-                        {dept}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-                
-                <Text style={styles.label}>Preferred Time:</Text>
-                <ScrollView horizontal style={styles.timeSlots}>
-                  {timeSlots.map(slot => (
-                    <TouchableOpacity
-                      key={slot}
-                      style={[
-                        styles.timeSlot,
-                        appointmentData.time === slot && styles.timeSlotSelected
-                      ]}
-                      onPress={() => setAppointmentData(prev => ({...prev, time: slot}))}
-                    >
-                      <Text style={[
-                        styles.timeSlotText,
-                        appointmentData.time === slot && styles.timeSlotTextSelected
-                      ]}>
-                        {slot}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-                
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Reason for visit"
-                  multiline
-                  numberOfLines={3}
-                  value={appointmentData.reason}
-                  onChangeText={(text) => setAppointmentData(prev => ({...prev, reason: text}))}
-                />
-                
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
                 <TouchableOpacity 
-                  style={styles.primaryButton}
+                  style={styles.bookButton}
                   onPress={handleBookAppointment}
                 >
-                  <Text style={styles.primaryButtonText}>Confirm Booking</Text>
+                  <Ionicons name="calendar" size={20} color="#FFF" />
+                  <Text style={styles.bookButtonText}>Book Appointment</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.cancelButton}
+                  onPress={() => setShowBookingModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
-            )}
-            
-            <TouchableOpacity 
-              style={styles.secondaryButton}
-              onPress={() => setShowBookingModal(false)}
-            >
-              <Text style={styles.secondaryButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -270,4 +551,4 @@ const Appointments = () => {
   );
 };
 
-export default Appointments;
+export default Appointments

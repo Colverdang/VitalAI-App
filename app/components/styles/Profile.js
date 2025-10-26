@@ -1,179 +1,31 @@
-import { StyleSheet, Dimensions } from 'react-native';
-
-const { width } = Dimensions.get('window');
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#c11111ff',
+    padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  name: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  memberId: {
-    fontSize: 14,
-    color: '#666',
-  },
-  editButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E8ECF0',
-  },
-  section: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 16,
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
-  },
-  infoItem: {
-    width: '50%',
-    paddingHorizontal: 8,
-    marginBottom: 16,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-  },
-  editInput: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E8ECF0',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 4,
-  },
-  editInputSmall: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E8ECF0',
-    borderRadius: 8,
-    padding: 8,
-    fontWeight: '500',
-  },
-  infoCard: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
+    fontWeight: 'bold',
     marginBottom: 12,
+  },
+  input: {
     borderWidth: 1,
-    borderColor: '#E8ECF0',
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
   },
-  cardHeader: {
-    flexDirection: 'row',
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
   },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  cardValue: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 22,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  settingTexts: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  settingSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 18,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    gap: 12,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
-  },
-  dangerButton: {
-    borderBottomWidth: 0,
-    marginTop: 8,
-  },
-  dangerText: {
-    color: '#FF3B30',
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

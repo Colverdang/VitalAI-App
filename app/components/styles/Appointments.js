@@ -141,36 +141,74 @@ export const styles = StyleSheet.create({
   // Modal Styles
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    margin: 20,
-    width: width - 40,
-    maxHeight: height * 0.8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: height * 0.9,
+    marginTop: height * 0.1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 20,
-    textAlign: 'center',
   },
-  modalText: {
-    fontSize: 16,
-    color: '#666',
+  modalScroll: {
+    flex: 1,
+  },
+  section: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
+    gap: 8,
   },
-  label: {
+  patientInfoGrid: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8ECF0',
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    flex: 2,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: 8,
-    marginTop: 12,
+    marginBottom: 12,
   },
   input: {
     backgroundColor: '#F8F9FA',
@@ -180,82 +218,127 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    marginBottom: 12,
   },
   textArea: {
-    height: 80,
+    height: 100,
     textAlignVertical: 'top',
   },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 14,
+  optionsContainer: {
+    maxHeight: 200,
+  },
+  optionCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#666',
-    fontSize: 16,
-  },
-  departmentList: {
-    maxHeight: 120,
-    marginBottom: 12,
-  },
-  optionButton: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E8ECF0',
+    borderRadius: 12,
+    marginBottom: 8,
   },
-  optionButtonSelected: {
-    backgroundColor: '#E8F4FF',
+  optionCardSelected: {
+    backgroundColor: '#F0F7FF',
     borderColor: '#007AFF',
   },
-  optionButtonText: {
-    color: '#1A1A1A',
-    fontSize: 14,
-    textAlign: 'center',
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
   },
-  optionButtonTextSelected: {
+  optionText: {
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  optionTextSelected: {
     color: '#007AFF',
     fontWeight: '600',
   },
-  timeSlots: {
+  row: {
     flexDirection: 'row',
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 24,
   },
-  timeSlot: {
+  inputGroupHalf: {
+    flex: 1,
+  },
+  urgencyContainer: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  urgencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  urgencyOptionSelected: {
+    backgroundColor: '#FFFFFF',
+  },
+  urgencyText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  urgencyTextSelected: {
+    fontWeight: '600',
+  },
+  timeContainer: {
+    flexDirection: 'row',
+  },
+  timeOption: {
     backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
     marginRight: 8,
     borderWidth: 1,
     borderColor: '#E8ECF0',
   },
-  timeSlotSelected: {
-    backgroundColor: '#E8F4FF',
+  timeOptionSelected: {
+    backgroundColor: '#F0F7FF',
     borderColor: '#007AFF',
   },
-  timeSlotText: {
+  timeText: {
     fontSize: 14,
-    color: '#666',
+    color: '#1A1A1A',
   },
-  timeSlotTextSelected: {
+  timeTextSelected: {
     color: '#007AFF',
     fontWeight: '600',
   },
+  actionButtons: {
+    padding: 20,
+    gap: 12,
+  },
+  bookButton: {
+    backgroundColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  bookButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  
 });

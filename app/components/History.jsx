@@ -1,3 +1,4 @@
+// app/components/History.jsx
 import React, { useState } from 'react';
 import {
   View,
@@ -5,11 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles/History';
 
-const History = ({ messages }) => {
+const History = ({ messages, user }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Filter messages for history (excluding welcome message)
@@ -84,7 +86,7 @@ const History = ({ messages }) => {
         </View>
         
         <Text style={styles.messagePreview} numberOfLines={2}>
-          {item.isUser ? 'You: ' : 'VitalAi: '}
+          {item.isUser ? `${user?.fullName || 'You'}: ` : 'VitalAi: '}
           {item.text}
         </Text>
         
@@ -103,6 +105,9 @@ const History = ({ messages }) => {
       <View style={styles.header}>
         <Text style={styles.title}>Chat History</Text>
         <Text style={styles.subtitle}>
+          {user ? `${user.fullName}'s conversations` : 'Your conversations'}
+        </Text>
+        <Text style={styles.conversationCount}>
           {chatHistory.length} conversations
         </Text>
       </View>
@@ -145,13 +150,22 @@ const History = ({ messages }) => {
             <Ionicons name="time-outline" size={64} color="#CCC" />
             <Text style={styles.emptyStateTitle}>No history yet</Text>
             <Text style={styles.emptyStateText}>
-              Your chat history will appear here once you start conversations with VitalAi
+              {user ? `${user.fullName} has no chat history yet` : 'Your chat history will appear here once you start conversations with VitalAi'}
             </Text>
           </View>
         }
       />
     </View>
   );
+};
+
+// Add these new styles to History
+const additionalHistoryStyles = {
+  conversationCount: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
 };
 
 export default History;
