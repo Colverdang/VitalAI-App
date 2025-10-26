@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "app/components/index.jsx", "app/components/ChatBot.jsx", "app/_layout.jsx"  ]
 }
