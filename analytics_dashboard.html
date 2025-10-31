@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>VitalAI Analytics Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .card { background: #f5f5f5; padding: 20px; margin: 10px; border-radius: 8px; }
+        .metric { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        .label { color: #7f8c8d; }
+        .success { color: #27ae60; }
+        .warning { color: #f39c12; }
+    </style>
+</head>
+<body>
+    <h1>📊 VitalAI Analytics Dashboard</h1>
+    <div id="analytics"></div>
+    
+    <script>
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('http://localhost:8001/analytics/summary');
+                const data = await response.json();
+                
+                document.getElementById('analytics').innerHTML = 
+                    <div class="card">
+                        <div class="label">Total Patients Registered</div>
+                        <div class="metric"></div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Total Chat Sessions</div>
+                        <div class="metric"></div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Patients Registered Today</div>
+                        <div class="metric"></div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Data Source</div>
+                        <div class="metric ">
+                            
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Last Updated</div>
+                        <div class="metric"></div>
+                    </div>
+                ;
+            } catch (error) {
+                document.getElementById('analytics').innerHTML = '<p>Error loading analytics. Make sure the API server is running.</p>';
+            }
+        }
+        
+        // Load analytics on page load and every 30 seconds
+        loadAnalytics();
+        setInterval(loadAnalytics, 30000);
+    </script>
+</body>
+</html>

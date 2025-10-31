@@ -1,0 +1,20 @@
+{
+  "patients_created": [
+    {
+      "event_type": "patient_created",
+      "timestamp": "2025-10-26T00:01:28.888103",
+      "data": {
+        "patient_id": 999,
+        "first_name": "Test",
+        "last_name": "User",
+        "age": 30,
+        "gender": "Other"
+      }
+    }
+  ],
+  "chat_sessions": [],
+  "system_events": [],
+  "start_time": "2025-10-26T00:01:28.888103",
+  "total_patients": 1,
+  "total_chats": 0
+}
