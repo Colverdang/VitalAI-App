@@ -7,7 +7,7 @@ def create_vitalai_user():
         conn = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='Vitalroot!123'
+            password=''
         )
         
         cursor = conn.cursor()
@@ -25,7 +25,7 @@ def create_vitalai_user():
         test_conn = mysql.connector.connect(
             host='localhost',
             user='vitalai_admin',
-            password='B1tbyB1t.v1t@l.123',
+            password='',
             database='vitalai_prod'
         )
         print("✅ Application user connection test: PASSED")
