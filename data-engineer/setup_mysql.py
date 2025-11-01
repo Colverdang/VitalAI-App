@@ -8,7 +8,7 @@ def setup_production_database():
         connection = mysql.connector.connect(
             host='localhost',  # or your cloud MySQL host
             user='vitalai_admin',
-            password='B1tbyB1t.v1t@l.123',
+            password='',
             database='vitalai_prod'
         )
 
