@@ -8,7 +8,7 @@ def setup_complete_database():
         conn = mysql.connector.connect(
             host='localhost',
             user='vitalai_admin',
-            password='B1tbyB1t.v1t@l.123',
+            password='',
             database='vitalai_prod'
         )
         
