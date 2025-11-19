@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from app.db import get_db  # Only import get_db from db.py
+from app.db import get_db  # Import your database dependency
 from app.models import User
 from app.security import hash_password, verify_password, create_access_token
 
@@ -26,6 +26,7 @@ class RegisterRequest(BaseModel):
     medical_history: str | None = None
     emergency_contact: str | None = None
     address: str | None = None
+    role: str | None = "user"  # default to "user"
 
 class LoginRequest(BaseModel):
     identifier: str
@@ -72,14 +73,14 @@ def register_user(user: RegisterRequest, db: Session = Depends(get_db)):
         medical_history=user.medical_history,
         emergency_contact=user.emergency_contact,
         address=user.address,
-        role="user"  # default role
+        role=user.role or "user"  # default role
     )
 
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
 
-    token = create_access_token(subject=uid, role="user")
+    token = create_access_token(subject=uid, role=db_user.role)
 
     # Return safe user dict (exclude sensitive info)
     user_data = {
@@ -92,7 +93,8 @@ def register_user(user: RegisterRequest, db: Session = Depends(get_db)):
         "passport_number": db_user.passport_number,
         "gender": db_user.gender,
         "preferred_language": db_user.preferred_language,
-        "date_of_birth": db_user.date_of_birth
+        "date_of_birth": db_user.date_of_birth,
+        "role": db_user.role
     }
 
     return TokenResponse(access_token=token, user=user_data)
@@ -115,8 +117,10 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(req.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token(subject=user.id, role="user")
+    # Create token with user's actual role
+    token = create_access_token(subject=user.id, role=user.role)
 
+    # Return user data with role
     user_data = {
         "id": user.id,
         "name": user.name,
@@ -127,7 +131,8 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         "passport_number": user.passport_number,
         "gender": user.gender,
         "preferred_language": user.preferred_language,
-        "date_of_birth": user.date_of_birth
+        "date_of_birth": user.date_of_birth,
+        "role": user.role
     }
 
     return TokenResponse(access_token=token, user=user_data)
