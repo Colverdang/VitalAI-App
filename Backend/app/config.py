@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     # ---------------------------------------------------------
     # DATABASE SETTINGS
     # ---------------------------------------------------------
-    mysql_url: str = Field(default="mysql+pymysql://root:@127.0.0.1:3306/vitalai_db")
+#     mysql_url: str = Field(default="mysql+pymysql://root:@127.0.0.1:3306/vitalai_db")
+    mysql_url: str = Field(default="mysql+pymysql://root:feeRsItIbDsIGZqBHoocugaydwtDaXDr@centerbeam.proxy.rlwy.net:54963/railway")
     sqlite_url: str = Field(default="sqlite:///./vitalai.db")
 
     database_url: str = Field(default="")  # Will be auto-set by validator
