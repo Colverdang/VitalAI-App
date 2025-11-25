@@ -3,7 +3,7 @@ import hashlib
 import secrets
 from typing import Dict, Any
 
-import jwt
+from jose import jwt
 from fastapi import HTTPException, Request, Depends
 
 from app.config import get_settings

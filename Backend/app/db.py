@@ -10,7 +10,8 @@ def create_database_engine():
     """Create database engine with proper configuration"""
     try:
         if settings.is_mysql:
-            # MySQL configuration
+            # MySQL configuration using PyMySQL
+            # Ensure your DATABASE_URL starts with: 'mysql+pymysql://user:password@host/dbname'
             engine = create_engine(
                 settings.database_url,
                 echo=True,
@@ -19,7 +20,7 @@ def create_database_engine():
                 max_overflow=settings.database_max_overflow,
                 pool_pre_ping=True
             )
-            # Test MySQL connection with text() wrapper
+            # Test MySQL connection
             with engine.connect() as conn:
                 result = conn.execute(text("SELECT 1"))
                 print(f"✅ Connected to MySQL database - Test result: {result.fetchone()[0]}")
@@ -56,8 +57,12 @@ def init_db():
         print("✅ Database tables created successfully")
         
         # Verify tables were created
+        if settings.is_mysql:
+            query = "SHOW TABLES"
+        else:
+            query = "SELECT name FROM sqlite_master WHERE type='table';"
         with engine.connect() as conn:
-            result = conn.execute(text("SHOW TABLES"))
+            result = conn.execute(text(query))
             tables = result.fetchall()
             print(f"📊 Found {len(tables)} tables in database")
             for table in tables:
@@ -66,7 +71,6 @@ def init_db():
     except Exception as e:
         print(f"❌ Error creating database tables: {e}")
 
-# ADD THIS FUNCTION - This is what's missing
 def get_db():
     """Database dependency for FastAPI"""
     db = SessionLocal()
