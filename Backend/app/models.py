@@ -1,5 +1,5 @@
 # app/models.py
-from sqlalchemy import Column, String, DateTime, Text, Integer, ForeignKey
+from sqlalchemy import Column, String, DateTime, Text, Integer, ForeignKey, Enum, Boolean, TIMESTAMP,func
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -10,26 +10,14 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(100), unique=True, index=True, nullable=False)
-    password = Column(String(255), nullable=False)
-
-    phone_number = Column(String(15), nullable=True)
-    id_number = Column(String(13), unique=True, index=True, nullable=True)
-    file_number = Column(String(20), unique=True, index=True, nullable=True)
-    passport_number = Column(String(20), unique=True, index=True, nullable=True)
-
-    gender = Column(String(10), nullable=True)
-    preferred_language = Column(String(10), nullable=True)
-    date_of_birth = Column(String(10), nullable=True)
-
-    medical_history = Column(Text, nullable=True)
-    emergency_contact_info = Column(Text, nullable=True)
-    address = Column(Text, nullable=True)
-
-    role = Column(String(20), default="user")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    email = Column(String(255), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    phone_number = Column(String(20))
+    role = Column(Enum("patient", "doctor", "nurse", "admin", "staff"), default="patient")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
 class EmergencyContact(Base):
     __tablename__ = "emergency_contacts"

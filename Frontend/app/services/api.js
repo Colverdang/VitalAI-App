@@ -146,96 +146,56 @@ export const apiService = {
   // Authentication endpoints - using ID/Passport/File Number
   async login(identifier, password) {
     try {
-      console.log('🔐 Attempting login with identifier:', identifier);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      console.log('🔐 Attempting login with identifier:', identifier.identifier);
+
+
+
+      // Call your FastAPI login endpoint
+      const response = await mainApi.post("/api/auth/login", {
+        identifier: identifier.identifier,  // explicitly matches backend field
+        password: identifier.password
+      });
+
       if (!identifier || !password) {
         throw new Error('Please enter both identifier and password');
       }
 
-      // Find user by identifier (ID number, file number, or passport)
-      let user = null;
-      
-      // Check all possible identifier fields
-      for (const userId in demoUsers) {
-        const demoUser = demoUsers[userId];
-        if (demoUser.idNumber === identifier || 
-            demoUser.fileNumber === identifier || 
-            demoUser.passportNumber === identifier) {
-          user = demoUser;
-          break;
-        }
-      }
+      console.log("✅ Login successful, response:", response.data);
 
-      if (!user) {
-        throw new Error('Invalid identifier. Please check your ID number, file number, or passport number.');
-      }
-
-      // Check password (in real app, this would be hashed)
-      if (user.password !== password) {
-        throw new Error('Invalid password. Please try again.');
-      }
-
-      // Return user data without password
-      const { password: _, ...userWithoutPassword } = user;
-      
       return {
         success: true,
-        user: userWithoutPassword,
-        token: `demo-token-${user.id}`
+        user: response.data,  // the backend returns user info + token
+        token: response.data.token
       };
 
     } catch (error) {
-      throw new Error(`Login failed: ${error.message}`);
+      console.error("Login failed:", error.response?.data || error.message);
+
+      // Provide better error feedback
+      let message = "Login failed. Please try again.";
+      if (error.response?.status === 401) {
+        message = "Invalid identifier or password.";
+      }
+
+      throw new Error(message);
     }
   },
 
   async register(userData) {
     try {
-      console.log('📝 Simulating registration for:', userData.fullName);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Validate required fields
-      if (!userData.idNumber && !userData.passportNumber) {
-        throw new Error('Please provide either ID number or passport number');
-      }
+      const response = await axios.post("http://localhost:8000/api/auth/register", {
+        full_name: userData.name,  // <- changed from 'name' to 'full_name'
+        email: userData.email,
+        password: userData.password,
+        phone_number: userData.phone_number, // optional
+        role: userData.role || "patient"     // optional
+      });
 
-      if (!userData.fullName || !userData.password) {
-        throw new Error('Please fill in all required fields');
-      }
-
-      // Check if user already exists
-      const existingUser = demoUsers[userData.idNumber || userData.passportNumber];
-      if (existingUser) {
-        throw new Error('User with this identifier already exists');
-      }
-
-      // Create new user (in real app, this would save to database)
-      const newUser = {
-        id: 'new-user-' + Date.now(),
-        ...userData,
-        fileNumber: `MED${new Date().getFullYear()}${String(Object.keys(demoUsers).length + 1).padStart(3, '0')}`,
-        role: userData.role || 'patient',
-        language: userData.language || 'en'
-      };
-
-      // In a real app, you would save to database here
-      // For demo, we'll just return the user without saving
-
-      const { password: _, ...userWithoutPassword } = newUser;
-
-      return {
-        success: true,
-        user: userWithoutPassword,
-        token: `demo-token-${newUser.id}`
-      };
+      return response.data;
 
     } catch (error) {
-      throw new Error(`Registration failed: ${error.message}`);
+      console.error("Registration error:", error);
+      throw error;
     }
   },
 

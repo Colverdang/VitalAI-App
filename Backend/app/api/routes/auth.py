@@ -1,138 +1,131 @@
 # app/api/routes/auth.py
 import uuid
+import logging
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from app.db import get_db  # Import your database dependency
+from app.db import get_db
 from app.models import User
 from app.security import hash_password, verify_password, create_access_token
+from passlib.context import CryptContext
+
+router = APIRouter()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 
+# Configure logger for this module
+logger = logging.getLogger("auth")
+logger.setLevel(logging.INFO)
+
 # ----------------------------
-# Pydantic Request Models
+# Pydantic Models
 # ----------------------------
 class RegisterRequest(BaseModel):
-    name: str
+    full_name: str
     email: str
     password: str = Field(min_length=6)
     phone_number: str | None = None
-    id_number: str | None = None
-    file_number: str | None = None
-    passport_number: str | None = None
-    gender: str | None = None
-    preferred_language: str | None = None
-    date_of_birth: str | None = None
-    medical_history: str | None = None
-    emergency_contact: str | None = None
-    address: str | None = None
-    role: str | None = "user"  # default to "user"
+    role: str | None = "patient"
+
 
 class LoginRequest(BaseModel):
-    identifier: str
-    password: str = Field(min_length=6)
+    identifier: str  # can be email, id_number, file_number, passport_number
+    password: str
+
+class LoginResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    phone_number: str | None
+    role: str
+    token: str
+
+
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: dict | None = None
 
+
 # ----------------------------
 # Register Endpoint
 # ----------------------------
 @router.post("/register", response_model=TokenResponse)
 def register_user(user: RegisterRequest, db: Session = Depends(get_db)):
-    # Ensure at least one identifier
-    if not (user.id_number or user.file_number or user.passport_number or user.email):
-        raise HTTPException(status_code=400, detail="Provide ID number, file number, passport, or email.")
+    logger.info(f"Register endpoint reached for email: {user.email}")
 
-    # Check for existing user
-    existing_user = db.query(User).filter(
-        (User.email == user.email) |
-        (User.id_number == user.id_number) |
-        (User.file_number == user.file_number) |
-        (User.passport_number == user.passport_number)
-    ).first()
-
+    # Check existing user
+    existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists with that identifier or email.")
+        logger.warning(f"Registration failed: user already exists for email {user.email}")
+        raise HTTPException(status_code=400, detail="User already exists.")
 
     uid = str(uuid.uuid4())
     db_user = User(
         id=uid,
-        name=user.name,
+        full_name=user.full_name,
         email=user.email,
-        password=hash_password(user.password),
+        password_hash=hash_password(user.password),
         phone_number=user.phone_number,
-        id_number=user.id_number,
-        file_number=user.file_number,
-        passport_number=user.passport_number,
-        gender=user.gender,
-        preferred_language=user.preferred_language,
-        date_of_birth=user.date_of_birth,
-        medical_history=user.medical_history,
-        emergency_contact=user.emergency_contact,
-        address=user.address,
-        role=user.role or "user"  # default role
+        role=user.role or "patient"
     )
 
+    logger.info(f"Creating user {db_user.full_name} with ID {uid}")
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    logger.info(f"User {db_user.full_name} created successfully")
 
     token = create_access_token(subject=uid, role=db_user.role)
+    logger.info(f"Token generated for user {db_user.email}")
 
-    # Return safe user dict (exclude sensitive info)
     user_data = {
         "id": db_user.id,
-        "name": db_user.name,
+        "full_name": db_user.full_name,
         "email": db_user.email,
         "phone_number": db_user.phone_number,
-        "id_number": db_user.id_number,
-        "file_number": db_user.file_number,
-        "passport_number": db_user.passport_number,
-        "gender": db_user.gender,
-        "preferred_language": db_user.preferred_language,
-        "date_of_birth": db_user.date_of_birth,
         "role": db_user.role
     }
 
+    logger.info(f"Returning response for user {db_user.email}")
     return TokenResponse(access_token=token, user=user_data)
+
 
 # ----------------------------
 # Login Endpoint
 # ----------------------------
 @router.post("/login", response_model=TokenResponse)
-def login(req: LoginRequest, db: Session = Depends(get_db)):
-    identifier = req.identifier.strip()
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+    logging.info(f"🔐 Login attempt for identifier: {request.identifier}")
 
-    # Query user by email, ID, file, or passport
+    # Query user by email, id_number, or passport_number
     user = db.query(User).filter(
-        (User.email == identifier) |
-        (User.id_number == identifier) |
-        (User.file_number == identifier) |
-        (User.passport_number == identifier)
+        (User.email == request.identifier) |
+        (User.id == request.identifier) |
+        (User.phone_number == request.identifier)
     ).first()
 
-    if not user or not verify_password(req.password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not user:
+        logging.warning(f"❌ User not found for identifier: {request.identifier}")
+        raise HTTPException(status_code=401, detail="Invalid identifier or password")
 
-    # Create token with user's actual role
-    token = create_access_token(subject=user.id, role=user.role)
+    # Verify password
+    if not pwd_context.verify(request.password, user.password_hash):
+        logging.warning(f"❌ Password mismatch for user: {user.full_name}")
+        raise HTTPException(status_code=401, detail="Invalid identifier or password")
 
-    # Return user data with role
-    user_data = {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "phone_number": user.phone_number,
-        "id_number": user.id_number,
-        "file_number": user.file_number,
-        "passport_number": user.passport_number,
-        "gender": user.gender,
-        "preferred_language": user.preferred_language,
-        "date_of_birth": user.date_of_birth,
-        "role": user.role
-    }
+    logging.info(f"✅ Login successful for user: {user.full_name}")
 
-    return TokenResponse(access_token=token, user=user_data)
+    # Generate token (for now simple string, replace with JWT later)
+    token = f"token-for-{user.id}"
+
+    return LoginResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        phone_number=user.phone_number,
+        role=user.role,
+        token=token
+    )
