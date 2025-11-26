@@ -109,12 +109,12 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     if not user:
         logging.warning(f"❌ User not found for identifier: {request.identifier}")
-        raise HTTPException(status_code=401, detail="Invalid identifier or password")
+        raise HTTPException(status_code=401, detail="Invalid identifier or password" )
 
     # Verify password
     if not pwd_context.verify(request.password, user.password_hash):
         logging.warning(f"❌ Password mismatch for user: {user.full_name}")
-        raise HTTPException(status_code=401, detail="Invalid identifier or password")
+        raise HTTPException(status_code=401, detail="Invalid identifier or password for " + user.full_name)
 
     logging.info(f"✅ Login successful for user: {user.full_name}")
 

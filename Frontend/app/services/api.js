@@ -174,7 +174,7 @@ export const apiService = {
       // Provide better error feedback
       let message = "Login failed. Please try again.";
       if (error.response?.status === 401) {
-        message = "Invalid identifier or password.";
+        message = "Invalid identifier or password." + error.response.data;
       }
 
       throw new Error(message);
