@@ -78,33 +78,31 @@ const IdentificationStep = ({
     )}
 
     <TextInput
-  key="idNumber-input"
-  style={styles.input}
-  placeholder={
-    detectedIdType === 'id'
-      ? "Enter 13-digit ID number"
-      : detectedIdType === 'file'
-      ? "Enter 10-digit file number"
-      : "Enter ID, passport, or file number"
-  }
-  value={formData.idNumber}
-  onChangeText={(text) => {
-    let cleaned = text;
-    
-    // Only allow digits for ID/file numbers
-    if (detectedIdType === 'id') {
-      cleaned = text.replace(/[^\d]/g, '');
-    } else if (detectedIdType === 'file') {
-      cleaned = text.replace(/[^\d]/g, '');
-    }
-    // For passport, allow alphanumeric
-    // Optionally, trim to reasonable max (e.g., 20)
-    if (cleaned.length > 13) cleaned = cleaned.slice(0, 13);
+        key="name-input"
+        style={styles.input}
+        placeholder={
+          detectedIdType === 'id'
+              ? "Enter your email or ID number"
+              : detectedIdType === 'file'
+                  ? "Enter your email or file number"
+                  : "Enter email, ID, passport, or file number"
+        }
+        value={formData.idNumber}
+        onChangeText={(text) => {
+          // ALLOW EVERYTHING (letters + numbers)
+          let cleaned = text;
 
-    onIdNumberChange(cleaned);
-  }}
-  keyboardType={detectedIdType === 'passport' ? 'default' : 'numeric'}
-/>
+          // Optional: uppercase passport, file, etc.
+          cleaned = cleaned.trim();
+
+          // Optional: limit to reasonable length
+          if (cleaned.length > 40) cleaned = cleaned.slice(0, 40);
+
+          onIdNumberChange(cleaned);
+        }}
+        keyboardType="default"        // <- allows letters and numbers
+        autoCapitalize="none"
+    />
 
 
     {!isLogin && (
@@ -121,7 +119,7 @@ const IdentificationStep = ({
           <Text style={formData.gender ? styles.inputText : styles.placeholderText}>
             {formData.gender || "Select Gender"}
           </Text>
-          <Ionicons 
+          <Ionicons
             name={showGenderDropdown ? "chevron-up" : "chevron-down"} 
             size={20} 
             color={formData.idNumber.length === 13 ? "#999" : "#666"} 
@@ -179,7 +177,7 @@ const IdentificationStep = ({
           placeholder="YYYY-MM-DD"
           value={formData.dateOfBirth}
           onChangeText={(text) => onDateOfBirthChange(text)}
-          keyboardType="numeric"
+          keyboardType="default"
           maxLength={13}
           editable={formData.idNumber.length !== 13}
           selectTextOnFocus={formData.idNumber.length !== 13}
@@ -456,35 +454,24 @@ const Auth = ({ onLogin, onClose, visible }) => {
   };
 
   const handleIdNumberChange = (text) => {
-    // Allow alphanumeric characters for passport, but only digits for ID/file numbers
-    const cleaned = text.length <= 13 ? text.replace(/[^\d]/g, '') : text.replace(/[^a-zA-Z0-9]/g, '');
-    
-    // Update ID number field
+    // Allow letters + numbers for login always
+    const cleaned = text.replace(/[^a-zA-Z0-9@.]/g, '');
+
     handleInputChange('idNumber', cleaned);
-    
-    // Detect ID type based on length
+
     const idType = detectIdType(cleaned);
-    
-    // If we have 13 digits (SA ID), parse and auto-fill date of birth and gender
-    if (cleaned.length === 13 && /^\d+$/.test(cleaned)) {
+
+    // Only auto-fill DOB + gender if it's a TRUE 13-digit numeric ID
+    if (/^\d{13}$/.test(cleaned)) {
       const dateOfBirth = parseDateFromSAID(cleaned);
-      if (dateOfBirth) {
-        handleInputChange('dateOfBirth', dateOfBirth);
-      }
-      
-      // Auto-fill gender
+      if (dateOfBirth) handleInputChange('dateOfBirth', dateOfBirth);
+
       const gender = parseGenderFromSAID(cleaned);
-      if (gender) {
-        handleInputChange('gender', gender);
-      }
-    } else if (cleaned.length < 13) {
-      // Clear auto-filled fields if ID becomes incomplete
-      if (formData.dateOfBirth === parseDateFromSAID(formData.idNumber)) {
-        handleInputChange('dateOfBirth', '');
-      }
-      if (formData.gender === parseGenderFromSAID(formData.idNumber)) {
-        handleInputChange('gender', '');
-      }
+      if (gender) handleInputChange('gender', gender);
+    } else {
+      // Clear auto-filled fields
+      handleInputChange('dateOfBirth', '');
+      handleInputChange('gender', '');
     }
   };
 

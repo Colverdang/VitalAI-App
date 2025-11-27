@@ -146,7 +146,7 @@ export const apiService = {
   // Authentication endpoints - using ID/Passport/File Number
   async login(identifier, password) {
     try {
-      console.log('🔐 Attempting login with identifier:', identifier.identifier);
+      console.log('🔐 Attempting login with identifier:', identifier.password);
 
 
 
@@ -156,7 +156,7 @@ export const apiService = {
         password: identifier.password
       });
 
-      if (!identifier || !password) {
+      if (!identifier || !identifier.password) {
         throw new Error('Please enter both identifier and password');
       }
 

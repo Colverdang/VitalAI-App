@@ -9,8 +9,8 @@ from app.models import User
 from app.security import hash_password, verify_password, create_access_token
 from passlib.context import CryptContext
 
+
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 
@@ -96,36 +96,38 @@ def register_user(user: RegisterRequest, db: Session = Depends(get_db)):
 # ----------------------------
 # Login Endpoint
 # ----------------------------
+# ----------------------------
+# Login Endpoint
+# ----------------------------
 @router.post("/login", response_model=TokenResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     logging.info(f"🔐 Login attempt for identifier: {request.identifier}")
 
-    # Query user by email, id_number, or passport_number
+    # Query user by any valid identifier
     user = db.query(User).filter(
-        (User.email == request.identifier) |
-        (User.id == request.identifier) |
-        (User.phone_number == request.identifier)
+        (User.email == request.identifier)
     ).first()
 
     if not user:
         logging.warning(f"❌ User not found for identifier: {request.identifier}")
-        raise HTTPException(status_code=401, detail="Invalid identifier or password" )
+        raise HTTPException(status_code=401, detail="Invalid identifier or password")
 
-    # Verify password
-    if not pwd_context.verify(request.password, user.password_hash):
+    # Verify password using your custom function
+    if not verify_password(request.password, user.password_hash):
         logging.warning(f"❌ Password mismatch for user: {user.full_name}")
-        raise HTTPException(status_code=401, detail="Invalid identifier or password for " + user.full_name)
+        raise HTTPException(status_code=401, detail="Invalid identifier or password")
 
     logging.info(f"✅ Login successful for user: {user.full_name}")
 
-    # Generate token (for now simple string, replace with JWT later)
-    token = f"token-for-{user.id}"
+    # Generate token
+    token = create_access_token(subject=user.id, role=user.role)
 
-    return LoginResponse(
-        id=user.id,
-        email=user.email,
-        full_name=user.full_name,
-        phone_number=user.phone_number,
-        role=user.role,
-        token=token
-    )
+    user_data = {
+        "id": user.id,
+        "full_name": user.full_name,
+        "email": user.email,
+        "phone_number": user.phone_number,
+        "role": user.role
+    }
+
+    return TokenResponse(access_token=token, user=user_data)
